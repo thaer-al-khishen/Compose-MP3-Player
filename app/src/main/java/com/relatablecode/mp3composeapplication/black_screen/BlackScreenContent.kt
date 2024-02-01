@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.relatablecode.mp3composeapplication.black_screen.bottom_section.BlackScreenBottomRow
+import com.relatablecode.mp3composeapplication.black_screen.middle_section.BlackScreenMiddleRow
+import com.relatablecode.mp3composeapplication.black_screen.top_section.BlackScreenTopRow
 
 @Composable
 fun BlackScreenContent(modifier: Modifier = Modifier) {
@@ -17,5 +20,7 @@ fun BlackScreenContent(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         BlackScreenTopRow()
+        BlackScreenMiddleRow()
+        BlackScreenBottomRow()
     }
 }

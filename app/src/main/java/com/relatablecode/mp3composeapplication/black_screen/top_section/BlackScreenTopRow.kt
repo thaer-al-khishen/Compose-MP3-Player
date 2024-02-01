@@ -1,4 +1,4 @@
-package com.relatablecode.mp3composeapplication.black_screen
+package com.relatablecode.mp3composeapplication.black_screen.top_section
 
 import android.content.Context
 import android.content.Intent
