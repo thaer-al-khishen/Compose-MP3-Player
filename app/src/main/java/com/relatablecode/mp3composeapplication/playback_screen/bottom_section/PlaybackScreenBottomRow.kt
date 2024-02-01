@@ -1,6 +1,5 @@
-package com.relatablecode.mp3composeapplication.black_screen.bottom_section
+package com.relatablecode.mp3composeapplication.playback_screen.bottom_section
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import com.relatablecode.mp3composeapplication.R
 
 @Composable
-fun BlackScreenBottomRow(modifier: Modifier = Modifier) {
+fun PlaybackScreenBottomRow(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.then(
             Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)

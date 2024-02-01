@@ -1,4 +1,4 @@
-package com.relatablecode.mp3composeapplication.black_screen.top_section
+package com.relatablecode.mp3composeapplication.playback_screen.top_section
 
 import android.content.Context
 import android.content.Intent
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,13 +24,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.relatablecode.mp3composeapplication.R
+import com.relatablecode.mp3composeapplication.Theme
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
 @Composable
-fun BlackScreenTopRow(modifier: Modifier = Modifier) {
+fun PlaybackScreenTopRow(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.then(
             Modifier.fillMaxWidth()
@@ -55,7 +57,7 @@ private fun CurrentTime(modifier: Modifier = Modifier) {
         }
     }
 
-    Text(text = currentTime.value, color = Color.White, modifier = modifier)
+    Text(text = currentTime.value, color = Theme.PlaybackScreenContentColor, modifier = modifier)
 }
 
 private fun getFormattedTime(): String {
@@ -100,8 +102,9 @@ private fun BatteryIcon(batteryLevel: Int, modifier: Modifier = Modifier) {
         else -> R.drawable.battery_low
     }
 
-    Image(
+    Icon(
         painter = painterResource(id = batteryIconId),
+        tint = Theme.PlaybackScreenContentColor,
         contentDescription = "Battery Level",
         modifier = modifier
             .size(24.dp) // Adjust the size as needed

@@ -1,11 +1,12 @@
-package com.relatablecode.mp3composeapplication.black_screen.bottom_section
+package com.relatablecode.mp3composeapplication.playback_screen.bottom_section
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.relatablecode.mp3composeapplication.Theme
 
 @Composable
 fun MP3PlayerSelectionIcon(
@@ -21,9 +22,16 @@ fun MP3PlayerSelectionIcon(
         unSelectedImage
     }
 
-    Image(
+    val tint = if (isSelected) {
+        Theme.SelectedImageColor
+    } else {
+        Theme.UnSelectedImageColor
+    }
+
+    Icon(
         painter = painterResource(id = iconId),
         contentDescription = contentDescription,
+        tint = tint,
         modifier = modifier.then(
             Modifier.size(24.dp)
         )

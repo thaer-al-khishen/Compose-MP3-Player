@@ -6,7 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
-import com.relatablecode.mp3composeapplication.black_screen.BlackScreen
+import androidx.constraintlayout.compose.Dimension
+import com.relatablecode.mp3composeapplication.playback_screen.PlaybackScreen
 import com.relatablecode.mp3composeapplication.circular_control_panel.CircularControlPanel
 
 @Composable
@@ -14,7 +15,7 @@ fun MP3PlayerDevice() {
 
     ConstraintLayout(
         modifier = Modifier
-            .background(brush = MP3PlayerDeviceBackground())
+            .background(brush = mp3PlayerDeviceBackground())
             .fillMaxSize()
     ) {
         val guideline = createGuidelineFromTop(0.5f)    //Creates a guideline at 50% of the screen from top to bottom
@@ -22,15 +23,17 @@ fun MP3PlayerDevice() {
         // Screen with rounded corners
         val (screen, buttons) = createRefs()
 
-        BlackScreen(modifier = Modifier.constrainAs(screen) {
+        PlaybackScreen(modifier = Modifier.constrainAs(screen) {
             top.linkTo(parent.top, 20.dp)
             bottom.linkTo(guideline)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
+            start.linkTo(parent.start, 16.dp)
+            end.linkTo(parent.end, 16.dp)
+            width = Dimension.fillToConstraints
+            height = Dimension.value(300.dp)
         })
 
         CircularControlPanel(modifier = Modifier.constrainAs(buttons) {
-            top.linkTo(guideline, 20.dp)
+            top.linkTo(guideline, 50.dp)
             start.linkTo(parent.start)
             end.linkTo(parent.end)
         })
