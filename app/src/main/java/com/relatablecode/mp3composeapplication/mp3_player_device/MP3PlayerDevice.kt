@@ -2,12 +2,12 @@ package com.relatablecode.mp3composeapplication.mp3_player_device
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import com.relatablecode.mp3composeapplication.black_screen.BlackScreen
+import com.relatablecode.mp3composeapplication.circular_control_panel.CircularControlPanel
 
 @Composable
 fun MP3PlayerDevice() {
@@ -23,23 +23,17 @@ fun MP3PlayerDevice() {
         val (screen, buttons) = createRefs()
 
         BlackScreen(modifier = Modifier.constrainAs(screen) {
-            top.linkTo(parent.top)
+            top.linkTo(parent.top, 20.dp)
             bottom.linkTo(guideline)
             start.linkTo(parent.start)
             end.linkTo(parent.end)
         })
 
-        // Placeholder for MP3 buttons below the guideline
-        Button(
-            onClick = {  },
-            modifier = Modifier.constrainAs(buttons) {
-                top.linkTo(guideline)
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-            }
-        ) {
-            Text(text = "Play")
-        }
+        CircularControlPanel(modifier = Modifier.constrainAs(buttons) {
+            top.linkTo(guideline, 20.dp)
+            start.linkTo(parent.start)
+            end.linkTo(parent.end)
+        })
 
     }
 

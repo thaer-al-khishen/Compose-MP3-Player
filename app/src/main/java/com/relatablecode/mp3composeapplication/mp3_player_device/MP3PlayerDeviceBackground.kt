@@ -11,11 +11,9 @@ import androidx.compose.ui.graphics.Color
 @Composable
 fun MP3PlayerDeviceBackground(): Brush {
     val colors = listOf(
+        Color(0xFF80cde2), // water_nymph
         Color(0xFF70c7df), // blue_summer_82
-//        Color(0xFF59c0db), // blue_sky_dive
-        Color(0xFF3eb9d7), // blue_thalassophile
-//        Color(0xFF59c0db), // blue_sky_dive
-        Color(0xFF70c7df)  // blue_summer_82
+        Color(0xFF80cde2)  // water_nymph
     )
 
     return Brush.horizontalGradient(colors = colors)
