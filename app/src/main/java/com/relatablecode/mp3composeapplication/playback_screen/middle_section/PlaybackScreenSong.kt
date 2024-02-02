@@ -20,6 +20,7 @@ import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScr
 
 @Composable
 fun PlaybackScreenSong(modifier: Modifier = Modifier, playbackScreenState: PlaybackScreenState) {
+    //AppTodo(5): Add a seekbar for the songs that are playing
     Column(
         modifier = modifier.then(
             Modifier.fillMaxWidth()

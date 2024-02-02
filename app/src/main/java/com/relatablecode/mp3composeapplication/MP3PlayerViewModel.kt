@@ -128,6 +128,11 @@ class MP3PlayerViewModel(application: Application) : AndroidViewModel(applicatio
                 }
             }
 
+            !isMenuVisible && playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST -> {
+                //AppTodo(3): Go to the previous song above this one
+                _playbackScreenState.update { it.copy(isMenuVisible = true) }
+            }
+
             !isMenuVisible && playbackScreenEnum == PlaybackScreenEnum.SONG -> {
                 //Go to previous song
                 _playbackScreenState.update { it.copy(isMenuVisible = true) }
@@ -146,6 +151,11 @@ class MP3PlayerViewModel(application: Application) : AndroidViewModel(applicatio
         when {
             isMenuVisible -> {
                 _playbackScreenState.update { it.copy(playbackScreenEnum = getNextPlaybackScreen(it.playbackScreenEnum)) }
+            }
+
+            !isMenuVisible && playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST -> {
+                //AppTodo(2): Go to the next song beneath this one
+                _playbackScreenState.update { it.copy(isMenuVisible = true) }
             }
 
             !isMenuVisible && playbackScreenEnum == PlaybackScreenEnum.SONG -> {
@@ -207,14 +217,13 @@ class MP3PlayerViewModel(application: Application) : AndroidViewModel(applicatio
         when {
             playbackScreenEnum == PlaybackScreenEnum.HOME -> {
                 //Maybe choose a certain file?
-                //And:
                 viewModelScope.launch {
                     _mp3PlayerEvent.send(MP3PlayerEvent.AccessMediaSingleFile)
                 }
             }
 
             !isMenuVisible && playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST -> {
-                //Maybe choose a certain file?
+                //AppTodo(4): Play the currently selected song and navigate to the play song screen
                 //And:
                 _playbackScreenState.update { it.copy(isMenuVisible = true) }
             }

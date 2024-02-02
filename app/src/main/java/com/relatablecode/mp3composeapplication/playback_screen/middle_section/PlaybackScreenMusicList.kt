@@ -48,7 +48,6 @@ fun PlaybackScreenMusicList(modifier: Modifier = Modifier, playbackScreenState: 
             )
         }
     } else {
-        // Your existing if-else logic
         LazyColumn(
             modifier = modifier.then(
                 Modifier.padding(top = 16.dp, start = 8.dp)
@@ -61,6 +60,7 @@ fun PlaybackScreenMusicList(modifier: Modifier = Modifier, playbackScreenState: 
     }
 }
 
+//AppTodo(1): Add a selection background for the currently selected item before playing it
 @Composable
 private fun MP3MusicItem(mp3Item: Mp3Item) {
     Row(
