@@ -28,13 +28,21 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.relatablecode.mp3composeapplication.datastore.PreferencesKeys
 import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
 import com.relatablecode.mp3composeapplication.mp3_player_device.MP3PlayerDevice
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -53,7 +61,8 @@ class MainActivity : ComponentActivity() {
                 )
 
                 // Proceed to handle the URI
-                saveAudioFromUri(it)
+                saveUri(it)
+                navigateToMusicList()
             } catch (e: SecurityException) {
                 // Handle the exception, possibly by informing the user
                 Log.e("MainActivity", "Failed to take persistable URI permission", e)
@@ -65,14 +74,18 @@ class MainActivity : ComponentActivity() {
     private val pickMultipleAudioFiles = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri> ->
         // Handle the returned URIs
         uris.forEach { uri ->
-            // Take persistable URI permission for each URI
-            contentResolver.takePersistableUriPermission(
-                uri,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
+            try {// Take persistable URI permission for each URI
+                contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
 
-            saveAudioFromUri(uri)
+                saveUri(uri)
+            } catch (e: SecurityException) {
+                Log.e("MainActivity", "Failed to take persistable URI permission", e)
+            }
         }
+        navigateToMusicList()
     }
 
     private val viewModel: MP3PlayerViewModel by viewModels()
@@ -112,6 +125,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun setupObservers() {
+
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 withContext(Dispatchers.Main.immediate) {
@@ -123,23 +137,45 @@ class MainActivity : ComponentActivity() {
                             is MP3PlayerEvent.AccessMediaMultipleFiles -> {
                                 showMultipleFilePicker()
                             }
+                            is MP3PlayerEvent.PlaySong -> {
+                                playMusic(it.uri)
+                            }
+                            is MP3PlayerEvent.PauseSong -> {
+                                stopMusic()
+                            }
                         }
                     }
                 }
             }
         }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                retrieveUris().collect { uriSet ->
+                    // Initialize an empty list to hold Mp3Item objects
+                    val mp3Items = mutableListOf<Mp3Item>()
+
+                    // Iterate through each URI string
+                    uriSet.forEach { uri ->
+                        val title = getFileName(this@MainActivity, uri) ?: "Unknown Title"
+                        // Create an Mp3Item and add it to the list
+                        mp3Items.add(Mp3Item(uri, title))
+                    }
+
+                    // Update your PlaybackScreenState with the new list of Mp3Items
+                    viewModel.updateMp3Items(mp3Items)
+                }
+            }
+        }
+
     }
 
-    fun showSingleFilePicker() {
+    private fun showSingleFilePicker() {
         pickAudioFile.launch(arrayOf("audio/*")) // MIME type for audio files
     }
 
-    fun showMultipleFilePicker() {
+    private fun showMultipleFilePicker() {
         pickMultipleAudioFiles.launch(arrayOf("audio/*")) // MIME type for audio files
-    }
-
-    private fun saveAudioFromUri(uri: Uri) {
-        val name = getFileName(this, uri)
     }
 
     private fun playMusic(uri: Uri) {
@@ -175,6 +211,22 @@ class MainActivity : ComponentActivity() {
             }
         }
         return fileName
+    }
+
+    private fun saveUri(uri: Uri) {
+        viewModel.saveUri(uri)
+    }
+
+    private fun retrieveUris(): StateFlow<Set<Uri>> {
+        return viewModel.uris
+    }
+
+    private fun deleteUri(uri: Uri) {
+        viewModel.deleteUri(uri)
+    }
+
+    private fun navigateToMusicList() {
+        viewModel.navigateToMusicList()
     }
 
 }

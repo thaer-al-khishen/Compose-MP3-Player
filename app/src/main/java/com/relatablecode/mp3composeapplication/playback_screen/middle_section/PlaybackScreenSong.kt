@@ -16,9 +16,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.relatablecode.mp3composeapplication.R
 import com.relatablecode.mp3composeapplication.Theme
+import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
 
 @Composable
-fun PlaybackScreenMusic(modifier: Modifier = Modifier) {
+fun PlaybackScreenSong(modifier: Modifier = Modifier, playbackScreenState: PlaybackScreenState) {
     Column(
         modifier = modifier.then(
             Modifier.fillMaxWidth()
@@ -27,12 +28,18 @@ fun PlaybackScreenMusic(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_music_note_white),
+            painter = painterResource(id = R.drawable.ic_play),
             tint = Theme.PlaybackScreenMiddleImageColor,
-            contentDescription = "Songs list",
+            contentDescription = "Song",
             modifier = Modifier.size(100.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "Songs list", color = Theme.PlaybackScreenContentColor, fontSize = 16.sp)
+        playbackScreenState.songBeingPlayed?.let {
+            Text(text = it.title, color = Theme.PlaybackScreenContentColor, fontSize = 16.sp)
+        } ?: kotlin.run {
+            Text(text = "No song playing yet", color = Theme.PlaybackScreenContentColor, fontSize = 16.sp)
+        }
+
     }
+
 }

@@ -12,12 +12,18 @@ fun PlaybackScreenMiddleRow(
     )
 ) {
     when {
-        playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.MP3_FILE -> {
-            PlaybackScreenMusic()
+        playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST -> {
+            PlaybackScreenMusicList(modifier = modifier, playbackScreenState = playbackScreenState)
         }
+
+        playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.SONG -> {
+            PlaybackScreenSong(playbackScreenState = playbackScreenState)
+        }
+
         playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.SETTINGS -> {
             PlaybackScreenSettings()
         }
+
         else -> {
             PlaybackScreenHome()
         }

@@ -33,9 +33,16 @@ fun PlaybackScreenBottomRow(modifier: Modifier = Modifier, playbackScreenState: 
             )
             Spacer(modifier = Modifier.width(8.dp))
             MP3PlayerSelectionIcon(
-                isSelected = playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.MP3_FILE,
+                isSelected = playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST,
                 selectedImage = R.drawable.ic_music_note_blue,
                 unSelectedImage = R.drawable.ic_music_note_white,
+                contentDescription = "Home"
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            MP3PlayerSelectionIcon(
+                isSelected = playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.SONG,
+                selectedImage = R.drawable.ic_play,
+                unSelectedImage = R.drawable.ic_play,
                 contentDescription = "Home"
             )
             Spacer(modifier = Modifier.width(8.dp))
