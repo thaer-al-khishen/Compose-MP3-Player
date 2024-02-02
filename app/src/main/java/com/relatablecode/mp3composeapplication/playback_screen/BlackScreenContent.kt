@@ -1,17 +1,20 @@
 package com.relatablecode.mp3composeapplication.playback_screen
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.relatablecode.mp3composeapplication.playback_screen.bottom_section.PlaybackScreenBottomRow
 import com.relatablecode.mp3composeapplication.playback_screen.middle_section.PlaybackScreenMiddleRow
+import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
 import com.relatablecode.mp3composeapplication.playback_screen.top_section.PlaybackScreenTopRow
 
 @Composable
-fun BlackScreenContent(modifier: Modifier = Modifier) {
+fun BlackScreenContent(modifier: Modifier = Modifier, playbackScreenState: PlaybackScreenState) {
     Column(
         modifier = modifier.then(
             Modifier.fillMaxSize()
@@ -20,7 +23,7 @@ fun BlackScreenContent(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         PlaybackScreenTopRow()
-        PlaybackScreenMiddleRow()
-        PlaybackScreenBottomRow()
+        PlaybackScreenMiddleRow(playbackScreenState = playbackScreenState)
+        PlaybackScreenBottomRow(playbackScreenState = playbackScreenState)
     }
 }

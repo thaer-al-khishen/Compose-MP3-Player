@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -31,7 +32,7 @@ import com.relatablecode.mp3composeapplication.Theme
 import com.relatablecode.mp3composeapplication.playback_screen.BlackScreenContent
 
 @Composable
-fun CircularControlPanel(modifier: Modifier = Modifier) {
+fun CircularControlPanel(modifier: Modifier = Modifier, onEvent: (CircularControlClickEvent) -> Unit) {
     val outerCircleSize = 250.dp
     val innerCircleSize = 120.dp
 
@@ -77,7 +78,8 @@ fun CircularControlPanel(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .size(innerCircleSize)
                 .clip(CircleShape)
-                .background(Theme.PlaybackInnerCircleColor),
+                .background(Theme.PlaybackInnerCircleColor)
+                .clickable { onEvent.invoke(CircularControlClickEvent.OnMiddleButtonClicked) },
 
             contentAlignment = Alignment.Center
         ) {
@@ -85,10 +87,10 @@ fun CircularControlPanel(modifier: Modifier = Modifier) {
         }
 
         // Positioning the control texts and icons
-        ControlItem(text = "Menu", alignment = Alignment.TopCenter)
-        ControlItem(icon = ImageVector.vectorResource(id = R.drawable.ic_rewind), alignment = Alignment.CenterStart)
-        ControlItem(modifier = Modifier.graphicsLayer(rotationZ = 180f), icon = ImageVector.vectorResource(id = R.drawable.ic_rewind), alignment = Alignment.CenterEnd)
-        ControlItem(icon = ImageVector.vectorResource(id = R.drawable.ic_play_pause), alignment = Alignment.BottomCenter)
+        ControlItem(modifier = Modifier.clickable { onEvent.invoke(CircularControlClickEvent.OnMenuClicked) }, text = "Menu", alignment = Alignment.TopCenter)
+        ControlItem(modifier = Modifier.clickable { onEvent.invoke(CircularControlClickEvent.OnRewindClicked) }, icon = ImageVector.vectorResource(id = R.drawable.ic_rewind), alignment = Alignment.CenterStart)
+        ControlItem(modifier = Modifier.clickable { onEvent.invoke(CircularControlClickEvent.OnFastForwardClicked) }.graphicsLayer(rotationZ = 180f), icon = ImageVector.vectorResource(id = R.drawable.ic_rewind), alignment = Alignment.CenterEnd)
+        ControlItem(modifier = Modifier.clickable { onEvent.invoke(CircularControlClickEvent.OnPlayPauseClicked) }, icon = ImageVector.vectorResource(id = R.drawable.ic_play_pause), alignment = Alignment.BottomCenter)
     }
 }
 

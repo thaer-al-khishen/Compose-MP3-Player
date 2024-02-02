@@ -1,15 +1,26 @@
 package com.relatablecode.mp3composeapplication
 
+import android.content.Context
+import android.content.Intent
+import android.media.AudioAttributes
+import android.media.MediaMetadataRetriever
+import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.OpenableColumns
+import android.util.Log
 import android.view.View
 import android.view.WindowInsetsController
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -17,20 +28,70 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
 import com.relatablecode.mp3composeapplication.mp3_player_device.MP3PlayerDevice
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
+
+    // For a single audio file selection
+    // Register the contract for picking a single document, allowing persistable permission.
+    private val pickAudioFile = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+
+        uri?.let {
+            try {
+                // Take persistable URI permission.
+                contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+
+                // Proceed to handle the URI
+                saveAudioFromUri(it)
+            } catch (e: SecurityException) {
+                // Handle the exception, possibly by informing the user
+                Log.e("MainActivity", "Failed to take persistable URI permission", e)
+            }
+        }
+    }
+
+    // For multiple audio file selections
+    private val pickMultipleAudioFiles = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri> ->
+        // Handle the returned URIs
+        uris.forEach { uri ->
+            // Take persistable URI permission for each URI
+            contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+
+            saveAudioFromUri(uri)
+        }
+    }
+
+    private val viewModel: MP3PlayerViewModel by viewModels()
+
+    private var mediaPlayer: MediaPlayer? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         configureStatusBarFullScreenTransparency()
+        setupObservers()
 
         setContent {
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
-                MP3PlayerDevice()
+                val playbackScreenState = viewModel.playbackScreenState.collectAsState()
+                MP3PlayerDevice(playbackScreenState.value, viewModel::onEvent)
             }
         }
     }
@@ -48,6 +109,72 @@ class MainActivity : ComponentActivity() {
             // Additionally for light navigation bar icons if necessary
             // isAppearanceLightNavigationBars = true
         }
+    }
+
+    private fun setupObservers() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                withContext(Dispatchers.Main.immediate) {
+                    viewModel.mp3PlayerEvent.collect {
+                        when(it) {
+                            is MP3PlayerEvent.AccessMediaSingleFile -> {
+                                showSingleFilePicker()
+                            }
+                            is MP3PlayerEvent.AccessMediaMultipleFiles -> {
+                                showMultipleFilePicker()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun showSingleFilePicker() {
+        pickAudioFile.launch(arrayOf("audio/*")) // MIME type for audio files
+    }
+
+    fun showMultipleFilePicker() {
+        pickMultipleAudioFiles.launch(arrayOf("audio/*")) // MIME type for audio files
+    }
+
+    private fun saveAudioFromUri(uri: Uri) {
+        val name = getFileName(this, uri)
+    }
+
+    private fun playMusic(uri: Uri) {
+        mediaPlayer = MediaPlayer().apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .build()
+            )
+            setDataSource(this@MainActivity, uri)
+            prepare() // Consider using prepareAsync() for streaming over the network
+            start()
+        }
+        mediaPlayer?.start()
+    }
+
+    private fun stopMusic() {
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+        mediaPlayer = null
+    }
+
+    private fun getFileName(context: Context, uri: Uri): String? {
+        var fileName: String? = null
+        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            // moveToFirst() returns false if the cursor has 0 rows. Very useful for
+            // "if not found, return" logic.
+            if (cursor.moveToFirst()) {
+                // Note it's called "DISPLAY_NAME", not "TITLE"
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                fileName = cursor.getString(nameIndex)
+            }
+        }
+        return fileName
     }
 
 }

@@ -11,9 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.relatablecode.mp3composeapplication.Theme
+import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
 
 @Composable
-fun PlaybackScreen(modifier: Modifier = Modifier) {
+fun PlaybackScreen(modifier: Modifier = Modifier, playbackScreenState: PlaybackScreenState) {
     // Outer Box for border
     Box(
         modifier = modifier
@@ -28,7 +29,7 @@ fun PlaybackScreen(modifier: Modifier = Modifier) {
                 .matchParentSize() // Match the size of the outer Box
                 .background(Theme.PlaybackScreenColor, RoundedCornerShape(12.dp))
         ) {
-            BlackScreenContent()
+            BlackScreenContent(playbackScreenState = playbackScreenState)
         }
     }
 }

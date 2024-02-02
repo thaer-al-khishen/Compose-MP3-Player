@@ -6,4 +6,5 @@ sealed class CircularControlClickEvent {
     object OnFastForwardClicked: CircularControlClickEvent()
     object OnPlayPauseClicked: CircularControlClickEvent()
     object OnMiddleButtonClicked: CircularControlClickEvent()
+    object Default: CircularControlClickEvent()
 }
