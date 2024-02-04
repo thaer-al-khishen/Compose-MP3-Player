@@ -11,12 +11,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
 class MiddleButtonClickedUseCase(
-    private val playMusicUseCase: PlayMusicUseCase,
-    private val pauseMusicUseCase: PauseMusicUseCase
+    private val playMusicUseCase: PlayMusicUseCase, private val pauseMusicUseCase: PauseMusicUseCase
 ) {
+
     suspend operator fun invoke(
-        state: MutableStateFlow<PlaybackScreenState>,
-        mp3PlayerEventChannel: Channel<MP3PlayerEvent>
+        state: MutableStateFlow<PlaybackScreenState>, mp3PlayerEventChannel: Channel<MP3PlayerEvent>
     ) {
 
         val isInsideHome = state.value.playbackScreenEnum == PlaybackScreenEnum.HOME
@@ -40,8 +39,7 @@ class MiddleButtonClickedUseCase(
             isInsideMusicWithoutMenu -> {
                 //Play the currently selected song and navigate to the play song screen
                 handleClickInsideMusicListWithoutMenu(
-                    state = state,
-                    mp3PlayerEventChannel = mp3PlayerEventChannel
+                    state = state, mp3PlayerEventChannel = mp3PlayerEventChannel
                 )
             }
 
@@ -68,8 +66,7 @@ class MiddleButtonClickedUseCase(
     }
 
     private suspend fun handleClickInsideMusicListWithoutMenu(
-        state: MutableStateFlow<PlaybackScreenState>,
-        mp3PlayerEventChannel: Channel<MP3PlayerEvent>
+        state: MutableStateFlow<PlaybackScreenState>, mp3PlayerEventChannel: Channel<MP3PlayerEvent>
     ) {
         if (!state.value.isPlayingSong) {
             playSongDirectly(
@@ -95,9 +92,7 @@ class MiddleButtonClickedUseCase(
         uri: Uri
     ) {
         playMusicUseCase.invoke(
-            state = state,
-            mp3PlayerEventChannel = mp3PlayerEventChannel,
-            uri = uri
+            state = state, mp3PlayerEventChannel = mp3PlayerEventChannel, uri = uri
         )
     }
 
@@ -111,9 +106,7 @@ class MiddleButtonClickedUseCase(
             mp3PlayerEventChannel = mp3PlayerEventChannel,
         )
         playMusicUseCase.invoke(
-            state = state,
-            mp3PlayerEventChannel = mp3PlayerEventChannel,
-            uri = uri
+            state = state, mp3PlayerEventChannel = mp3PlayerEventChannel, uri = uri
         )
     }
 

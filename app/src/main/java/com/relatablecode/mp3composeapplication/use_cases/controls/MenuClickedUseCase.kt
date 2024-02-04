@@ -4,10 +4,10 @@ import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScr
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
-class MenuClickedUseCase(
-    private val state: MutableStateFlow<PlaybackScreenState>
-) {
-    operator fun invoke() {
+class MenuClickedUseCase {
+
+    operator fun invoke(state: MutableStateFlow<PlaybackScreenState>) {
         state.update { it.copy(isMenuVisible = !it.isMenuVisible) }
     }
+
 }

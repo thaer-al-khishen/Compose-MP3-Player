@@ -8,7 +8,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
-class PlayMusicUseCase() {
+class PlayMusicUseCase {
+
     suspend operator fun invoke(
         state: MutableStateFlow<PlaybackScreenState>,
         mp3PlayerEventChannel: Channel<MP3PlayerEvent>,
@@ -16,12 +17,11 @@ class PlayMusicUseCase() {
     ) {
         mp3PlayerEventChannel.send(MP3PlayerEvent.PlaySong(uri))
         state.update { currentState ->
-            currentState.copy(
-                isMenuVisible = true,
+            currentState.copy(isMenuVisible = true,
                 playbackScreenEnum = PlaybackScreenEnum.SONG,
                 isPlayingSong = true,
-                songBeingPlayed = currentState.mp3Items.find { it.uri == uri }
-            )
+                songBeingPlayed = currentState.mp3Items.find { it.uri == uri })
         }
     }
+
 }

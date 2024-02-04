@@ -12,6 +12,7 @@ class PlayPauseButtonClicked(
     private val playMusicUseCase: PlayMusicUseCase,
     private val pauseMusicUseCase: PauseMusicUseCase
 ) {
+
     suspend operator fun invoke(
         state: MutableStateFlow<PlaybackScreenState>,
         mp3PlayerEventChannel: Channel<MP3PlayerEvent>,
@@ -30,4 +31,5 @@ class PlayPauseButtonClicked(
             )
         }
     }
+
 }

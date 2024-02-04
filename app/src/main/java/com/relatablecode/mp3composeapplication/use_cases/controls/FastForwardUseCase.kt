@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
 class FastForwardUseCase {
+
     operator fun invoke(state: MutableStateFlow<PlaybackScreenState>) {
 
         val isMenuVisible = state.value.isMenuVisible

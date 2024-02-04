@@ -6,7 +6,9 @@ import com.relatablecode.mp3composeapplication.repository.UriRepository
 class DeleteUriUseCase(
     private val uriRepository: UriRepository
 ) {
+
     suspend operator fun invoke(uri: Uri) {
         uriRepository.deleteUri(uri)
     }
+
 }

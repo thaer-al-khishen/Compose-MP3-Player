@@ -6,7 +6,9 @@ import kotlinx.coroutines.flow.Flow
 class GetUrisUseCase(
     private val uriRepository: UriRepository
 ) {
+
     operator fun invoke(): Flow<Set<String>> {
         return uriRepository.urisFlow
     }
+
 }
