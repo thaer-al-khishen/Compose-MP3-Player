@@ -129,8 +129,16 @@ class MP3PlayerViewModel(application: Application) : AndroidViewModel(applicatio
             }
 
             !isMenuVisible && playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST -> {
-                //AppTodo(3): Go to the previous song above this one
-                _playbackScreenState.update { it.copy(isMenuVisible = true) }
+                val currentIndex = _playbackScreenState.value.mp3Items.indexOfFirst { it.isSelected }
+                if (currentIndex != -1) { // If there's a selected item
+                    // Calculate the previous index with circular list behavior
+                    val previousIndex = if (currentIndex - 1 < 0) _playbackScreenState.value.mp3Items.size - 1 else currentIndex - 1
+                    val updatedItems = _playbackScreenState.value.mp3Items.mapIndexed { index, item ->
+                        item.copy(isSelected = index == previousIndex)
+                    }
+                    // Update the state with the newly selected item
+                    _playbackScreenState.update { it.copy(mp3Items = updatedItems) }
+                }
             }
 
             !isMenuVisible && playbackScreenEnum == PlaybackScreenEnum.SONG -> {
@@ -155,7 +163,16 @@ class MP3PlayerViewModel(application: Application) : AndroidViewModel(applicatio
 
             !isMenuVisible && playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST -> {
                 //AppTodo(2): Go to the next song beneath this one
-                _playbackScreenState.update { it.copy(isMenuVisible = true) }
+                // Find the index of the currently selected item
+                val currentIndex = _playbackScreenState.value.mp3Items.indexOfFirst { it.isSelected }
+                if (currentIndex != -1) { // If there's a selected item
+                    val nextIndex = (currentIndex + 1) % _playbackScreenState.value.mp3Items.size
+                    val updatedItems = _playbackScreenState.value.mp3Items.mapIndexed { index, item ->
+                        item.copy(isSelected = index == nextIndex)
+                    }
+                    // Update the state with the newly selected item
+                    _playbackScreenState.update { it.copy(mp3Items = updatedItems) }
+                }
             }
 
             !isMenuVisible && playbackScreenEnum == PlaybackScreenEnum.SONG -> {
@@ -182,9 +199,7 @@ class MP3PlayerViewModel(application: Application) : AndroidViewModel(applicatio
 
     private suspend fun playMusic() {
         _mp3PlayerEvent.send(
-            MP3PlayerEvent.PauseSong(
-                playbackScreenState.value.mp3Items.firstOrNull()?.uri ?: Uri.parse("")
-            )
+            MP3PlayerEvent.PauseSong
         )
         _playbackScreenState.update {
             it.copy(
@@ -222,10 +237,55 @@ class MP3PlayerViewModel(application: Application) : AndroidViewModel(applicatio
                 }
             }
 
+            isMenuVisible && playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST -> {
+                //AppTodo(4): Play the currently selected song and navigate to the play song screen
+                //When you are in this music screen and you click on the middle button
+                //First the menu will get hidden, next, if no items are currently selected, the first mp3item will get selected by default
+                //We will add some logic to scroll down to the currently selected mp3item
+                _playbackScreenState.update {
+                    it.copy(isMenuVisible = false, mp3Items = it.mp3Items.also { mp3Items ->
+                        (mp3Items.firstOrNull { it.isSelected })?.let {} ?: run {
+                            mp3Items[0].isSelected = true
+                        }
+                    })
+                }
+            }
+
             !isMenuVisible && playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST -> {
                 //AppTodo(4): Play the currently selected song and navigate to the play song screen
                 //And:
-                _playbackScreenState.update { it.copy(isMenuVisible = true) }
+                viewModelScope.launch {
+                    //If there is no song currently playing, play the selected song
+                    if (!_playbackScreenState.value.isPlayingSong) {
+                        _mp3PlayerEvent.send(
+                            MP3PlayerEvent.PlaySong(
+                                //If there is a song that's selected, play that song, else, play the first song if it exists, else, Uri.parse("")
+                                playbackScreenState.value.mp3Items.firstOrNull { it.isSelected }?.uri ?:
+                                playbackScreenState.value.mp3Items.firstOrNull()?.uri ?:
+                                Uri.parse("")
+                            )
+                        )
+                    } else {
+                        //If there is a song currently playing, pause it and play the selected song
+                        _mp3PlayerEvent.send(
+                            MP3PlayerEvent.PauseSong
+                        )
+                        _mp3PlayerEvent.send(
+                            MP3PlayerEvent.PlaySong(
+                                //If there is a song that's selected, play that song, else, play the first song if it exists, else, Uri.parse("")
+                                playbackScreenState.value.mp3Items.firstOrNull { it.isSelected }?.uri ?: playbackScreenState.value.mp3Items.firstOrNull()?.uri ?: Uri.parse("")
+                            )
+                        )
+                    }
+                    _playbackScreenState.update {
+                        it.copy(
+                            isMenuVisible = true,
+                            playbackScreenEnum = PlaybackScreenEnum.SONG,
+                            isPlayingSong = true,
+                            songBeingPlayed = playbackScreenState.value.mp3Items.firstOrNull { it.isSelected }
+                        )
+                    }
+                }
             }
 
             else -> {
