@@ -32,6 +32,15 @@ class UriRepository @Inject constructor(@ApplicationContext val appContext: Cont
         }
     }
 
+    //Created to save multiple uris when the user wants to import several mp3 files at once
+    suspend fun saveUris(uris: List<Uri>) {
+        val uniqueUris = uris.map(Uri::toString).toSet() // Convert to strings and eliminate any duplicates within the batch
+        dataStore.edit { preferences ->
+            val currentUris = preferences[PreferencesKeys.SELECTED_URIS] ?: setOf()
+            preferences[PreferencesKeys.SELECTED_URIS] = currentUris + uniqueUris // Adds the batch, set ensures uniqueness
+        }
+    }
+
     suspend fun deleteUri(uri: Uri) {
         // Remove Uri string from DataStore and release permissions if necessary
         val uriString = uri.toString() // Convert Uri to String for comparison

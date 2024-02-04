@@ -36,7 +36,10 @@ class MiddleButtonClickedUseCase @Inject constructor(
             isInsideMusicWithMenu -> {
                 //When you are in this music screen and you click on the middle button
                 //First the menu will get hidden, next, if no items are currently selected, the first mp3item will get selected by default
-                hideMenuAndHandleSongSelection(state)
+                hideMenuAndHandleSongSelection(
+                    state = state,
+                    mp3PlayerEventChannel = mp3PlayerEventChannel
+                )
             }
 
             isInsideMusicWithoutMenu -> {
@@ -54,17 +57,25 @@ class MiddleButtonClickedUseCase @Inject constructor(
     }
 
     private suspend fun sendAccessMediaEvent(mp3PlayerEventChannel: Channel<MP3PlayerEvent>) {
-        mp3PlayerEventChannel.send(MP3PlayerEvent.AccessMediaSingleFile)
+        mp3PlayerEventChannel.send(MP3PlayerEvent.AccessMediaMultipleFiles)
     }
 
-    private fun hideMenuAndHandleSongSelection(state: MutableStateFlow<PlaybackScreenState>) {
-        //Select first song by default if no song is selected yet
-        state.update {
-            it.copy(isMenuVisible = false, mp3Items = it.mp3Items.also { mp3Items ->
-                (mp3Items.firstOrNull { it.isSelected })?.let {} ?: run {
-                    mp3Items[0].isSelected = true
-                }
-            })
+    private suspend fun hideMenuAndHandleSongSelection(
+        state: MutableStateFlow<PlaybackScreenState>,
+        mp3PlayerEventChannel: Channel<MP3PlayerEvent>
+    ) {
+        //If there are no songs available yet, prompt the user to import them
+        if (state.value.mp3Items.isEmpty()) {
+            sendAccessMediaEvent(mp3PlayerEventChannel)
+        } else {
+            //Select first song by default if no song is selected yet
+            state.update {
+                it.copy(isMenuVisible = false, mp3Items = it.mp3Items.also { mp3Items ->
+                    (mp3Items.firstOrNull { it.isSelected })?.let {} ?: run {
+                        mp3Items[0].isSelected = true
+                    }
+                })
+            }
         }
     }
 

@@ -64,6 +64,13 @@ class MP3PlayerViewModel @Inject constructor(
         }
     }
 
+    //Created to save multiple uris when the user wants to import several mp3 files at once
+    fun saveUris(uris: List<Uri>) {
+        viewModelScope.launch {
+            useCases.saveUrisUseCase(uris)
+        }
+    }
+
     fun deleteUri(uri: Uri) {
         viewModelScope.launch {
             useCases.deleteUriUseCase(uri)

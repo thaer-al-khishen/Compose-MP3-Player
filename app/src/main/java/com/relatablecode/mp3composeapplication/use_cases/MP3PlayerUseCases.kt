@@ -10,11 +10,13 @@ import com.relatablecode.mp3composeapplication.use_cases.general.UpdateMp3ItemsU
 import com.relatablecode.mp3composeapplication.use_cases.uri.DeleteUriUseCase
 import com.relatablecode.mp3composeapplication.use_cases.uri.GetUrisUseCase
 import com.relatablecode.mp3composeapplication.use_cases.uri.SaveUriUseCase
+import com.relatablecode.mp3composeapplication.use_cases.uri.SaveUrisUseCase
 import javax.inject.Inject
 
 data class MP3PlayerUseCases @Inject constructor(
     val getUrisUseCase: GetUrisUseCase,
     val saveUriUseCase: SaveUriUseCase,
+    val saveUrisUseCase: SaveUrisUseCase,
     val deleteUriUseCase: DeleteUriUseCase,
     val menuButtonClickedUseCase: MenuButtonClickedUseCase,
     val rewindButtonClickedUseCase: RewindButtonClickedUseCase,

@@ -76,17 +76,14 @@ class MainActivity : ComponentActivity() {
     private val pickMultipleAudioFiles = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri> ->
         // Handle the returned URIs
         uris.forEach { uri ->
-            try {// Take persistable URI permission for each URI
+            try {
                 contentResolver.takePersistableUriPermission(
-                    uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-
-                saveUri(uri)
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             } catch (e: SecurityException) {
                 Log.e("MainActivity", "Failed to take persistable URI permission", e)
             }
         }
+        saveUris(uris) // Saves all at once, ensuring uniqueness
         navigateToMusicList()
     }
 
@@ -217,6 +214,11 @@ class MainActivity : ComponentActivity() {
 
     private fun saveUri(uri: Uri) {
         viewModel.saveUri(uri)
+    }
+
+    //Created to save multiple uris when the user wants to import several mp3 files at once
+    private fun saveUris(uris: List<Uri>) {
+        viewModel.saveUris(uris)
     }
 
     private fun retrieveUris(): StateFlow<Set<Uri>> {
