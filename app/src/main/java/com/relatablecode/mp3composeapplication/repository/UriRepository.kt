@@ -9,13 +9,17 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
 import com.relatablecode.mp3composeapplication.datastore.PreferencesKeys
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class UriRepository(private val context: Context) {
+@Singleton
+class UriRepository @Inject constructor(@ApplicationContext val appContext: Context) {
 
     private val Context.preferencesDataStore: DataStore<Preferences> by preferencesDataStore(name = "mp3Preferences")
-    private val dataStore: DataStore<Preferences> = context.preferencesDataStore
+    private val dataStore: DataStore<Preferences> = appContext.preferencesDataStore
 
     suspend fun saveUri(uri: Uri) {
         // Convert Uri to String and save it using DataStore
@@ -41,7 +45,7 @@ class UriRepository(private val context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 val contentUri = Uri.parse(uriString)
                 val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                context.contentResolver.releasePersistableUriPermission(contentUri, takeFlags)
+                appContext.contentResolver.releasePersistableUriPermission(contentUri, takeFlags)
             }
         }
     }

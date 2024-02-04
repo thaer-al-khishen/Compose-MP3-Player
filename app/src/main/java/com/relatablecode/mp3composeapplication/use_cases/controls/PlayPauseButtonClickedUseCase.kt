@@ -7,8 +7,11 @@ import com.relatablecode.mp3composeapplication.use_cases.music.PauseMusicUseCase
 import com.relatablecode.mp3composeapplication.use_cases.music.PlayMusicUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class PlayPauseButtonClicked(
+@Singleton
+class PlayPauseButtonClickedUseCase @Inject constructor(
     private val playMusicUseCase: PlayMusicUseCase,
     private val pauseMusicUseCase: PauseMusicUseCase
 ) {
@@ -19,15 +22,15 @@ class PlayPauseButtonClicked(
         uri: Uri
     ) {
         if (state.value.isPlayingSong) {
+            pauseMusicUseCase.invoke(
+                state = state,
+                mp3PlayerEventChannel = mp3PlayerEventChannel,
+            )
+        } else {
             playMusicUseCase.invoke(
                 state = state,
                 mp3PlayerEventChannel = mp3PlayerEventChannel,
                 uri
-            )
-        } else {
-            pauseMusicUseCase.invoke(
-                state = state,
-                mp3PlayerEventChannel = mp3PlayerEventChannel
             )
         }
     }

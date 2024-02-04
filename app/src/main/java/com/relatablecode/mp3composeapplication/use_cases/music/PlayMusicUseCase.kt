@@ -7,8 +7,11 @@ import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScr
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class PlayMusicUseCase {
+@Singleton
+class PlayMusicUseCase @Inject constructor() {
 
     suspend operator fun invoke(
         state: MutableStateFlow<PlaybackScreenState>,

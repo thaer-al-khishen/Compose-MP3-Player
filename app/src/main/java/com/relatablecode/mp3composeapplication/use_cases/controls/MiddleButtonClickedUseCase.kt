@@ -9,8 +9,11 @@ import com.relatablecode.mp3composeapplication.use_cases.music.PlayMusicUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class MiddleButtonClickedUseCase(
+@Singleton
+class MiddleButtonClickedUseCase @Inject constructor(
     private val playMusicUseCase: PlayMusicUseCase, private val pauseMusicUseCase: PauseMusicUseCase
 ) {
 
