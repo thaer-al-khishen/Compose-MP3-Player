@@ -8,7 +8,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class RewindUseCase @Inject constructor() {
+class RewindButtonClickedUseCase @Inject constructor() {
 
     operator fun invoke(state: MutableStateFlow<PlaybackScreenState>) {
 

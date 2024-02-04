@@ -8,7 +8,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FastForwardUseCase @Inject constructor() {
+class FastForwardButtonClickedUseCase @Inject constructor() {
 
     operator fun invoke(state: MutableStateFlow<PlaybackScreenState>) {
 

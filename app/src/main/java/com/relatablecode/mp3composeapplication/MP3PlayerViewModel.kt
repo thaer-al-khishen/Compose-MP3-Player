@@ -7,11 +7,11 @@ import com.relatablecode.mp3composeapplication.circular_control_panel.CircularCo
 import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenEnum
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
-import com.relatablecode.mp3composeapplication.use_cases.controls.FastForwardUseCase
-import com.relatablecode.mp3composeapplication.use_cases.controls.MenuClickedUseCase
+import com.relatablecode.mp3composeapplication.use_cases.controls.FastForwardButtonClickedUseCase
+import com.relatablecode.mp3composeapplication.use_cases.controls.MenuButtonClickedUseCase
 import com.relatablecode.mp3composeapplication.use_cases.controls.MiddleButtonClickedUseCase
 import com.relatablecode.mp3composeapplication.use_cases.controls.PlayPauseButtonClickedUseCase
-import com.relatablecode.mp3composeapplication.use_cases.controls.RewindUseCase
+import com.relatablecode.mp3composeapplication.use_cases.controls.RewindButtonClickedUseCase
 import com.relatablecode.mp3composeapplication.use_cases.general.NavigateToMusicListUseCase
 import com.relatablecode.mp3composeapplication.use_cases.general.UpdateMp3ItemsUseCase
 import com.relatablecode.mp3composeapplication.use_cases.uri.DeleteUriUseCase
@@ -31,9 +31,9 @@ class MP3PlayerViewModel @Inject constructor(
     private val getUrisUseCase: GetUrisUseCase,
     private val saveUriUseCase: SaveUriUseCase,
     private val deleteUriUseCase: DeleteUriUseCase,
-    private val menuClickedUseCase: MenuClickedUseCase,
-    private val rewindUseCase: RewindUseCase,
-    private val fastForwardUseCase: FastForwardUseCase,
+    private val menuButtonClickedUseCase: MenuButtonClickedUseCase,
+    private val rewindButtonClickedUseCase: RewindButtonClickedUseCase,
+    private val fastForwardButtonClickedUseCase: FastForwardButtonClickedUseCase,
     private val playPauseButtonClickedUseCase: PlayPauseButtonClickedUseCase,
     private val middleButtonClickedUseCase: MiddleButtonClickedUseCase,
     private val updateMp3ItemsUseCase: UpdateMp3ItemsUseCase,
@@ -94,15 +94,15 @@ class MP3PlayerViewModel @Inject constructor(
     fun onEvent(event: CircularControlClickEvent) {
         when (event) {
             CircularControlClickEvent.OnMenuClicked -> {
-                menuClickedUseCase(state = _playbackScreenState)
+                menuButtonClickedUseCase(state = _playbackScreenState)
             }
 
             CircularControlClickEvent.OnRewindClicked -> {
-                rewindUseCase(state = _playbackScreenState)
+                rewindButtonClickedUseCase(state = _playbackScreenState)
             }
 
             CircularControlClickEvent.OnFastForwardClicked -> {
-                fastForwardUseCase(state = _playbackScreenState)
+                fastForwardButtonClickedUseCase(state = _playbackScreenState)
             }
 
             CircularControlClickEvent.OnPlayPauseClicked -> {
