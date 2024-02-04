@@ -7,6 +7,7 @@ import com.relatablecode.mp3composeapplication.circular_control_panel.CircularCo
 import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenEnum
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
+import com.relatablecode.mp3composeapplication.use_cases.MP3PlayerUseCases
 import com.relatablecode.mp3composeapplication.use_cases.controls.FastForwardButtonClickedUseCase
 import com.relatablecode.mp3composeapplication.use_cases.controls.MenuButtonClickedUseCase
 import com.relatablecode.mp3composeapplication.use_cases.controls.MiddleButtonClickedUseCase
@@ -28,16 +29,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MP3PlayerViewModel @Inject constructor(
-    private val getUrisUseCase: GetUrisUseCase,
-    private val saveUriUseCase: SaveUriUseCase,
-    private val deleteUriUseCase: DeleteUriUseCase,
-    private val menuButtonClickedUseCase: MenuButtonClickedUseCase,
-    private val rewindButtonClickedUseCase: RewindButtonClickedUseCase,
-    private val fastForwardButtonClickedUseCase: FastForwardButtonClickedUseCase,
-    private val playPauseButtonClickedUseCase: PlayPauseButtonClickedUseCase,
-    private val middleButtonClickedUseCase: MiddleButtonClickedUseCase,
-    private val updateMp3ItemsUseCase: UpdateMp3ItemsUseCase,
-    private val navigateToMusicListUseCase: NavigateToMusicListUseCase
+    private val useCases: MP3PlayerUseCases
 ) : ViewModel() {
 
     private val _playbackScreenState = MutableStateFlow(
@@ -60,7 +52,7 @@ class MP3PlayerViewModel @Inject constructor(
 
     private fun collectUris() {
         viewModelScope.launch {
-            getUrisUseCase().collect { uriStrings ->
+            useCases.getUrisUseCase().collect { uriStrings ->
                 _uris.value = uriStrings.map { Uri.parse(it) }.toSet()
             }
         }
@@ -68,19 +60,19 @@ class MP3PlayerViewModel @Inject constructor(
 
     fun saveUri(uri: Uri) {
         viewModelScope.launch {
-            saveUriUseCase(uri)
+            useCases.saveUriUseCase(uri)
         }
     }
 
     fun deleteUri(uri: Uri) {
         viewModelScope.launch {
-            deleteUriUseCase(uri)
+            useCases.deleteUriUseCase(uri)
         }
     }
 
     fun updateMp3Items(mp3Items: List<Mp3Item>) {
         viewModelScope.launch {
-            updateMp3ItemsUseCase(
+            useCases.updateMp3ItemsUseCase(
                 state = _playbackScreenState,
                 mp3Items = mp3Items
             )
@@ -88,26 +80,26 @@ class MP3PlayerViewModel @Inject constructor(
     }
 
     fun navigateToMusicList() {
-        navigateToMusicListUseCase(state = _playbackScreenState)
+        useCases.navigateToMusicListUseCase(state = _playbackScreenState)
     }
 
     fun onEvent(event: CircularControlClickEvent) {
         when (event) {
             CircularControlClickEvent.OnMenuClicked -> {
-                menuButtonClickedUseCase(state = _playbackScreenState)
+                useCases.menuButtonClickedUseCase(state = _playbackScreenState)
             }
 
             CircularControlClickEvent.OnRewindClicked -> {
-                rewindButtonClickedUseCase(state = _playbackScreenState)
+                useCases.rewindButtonClickedUseCase(state = _playbackScreenState)
             }
 
             CircularControlClickEvent.OnFastForwardClicked -> {
-                fastForwardButtonClickedUseCase(state = _playbackScreenState)
+                useCases.fastForwardButtonClickedUseCase(state = _playbackScreenState)
             }
 
             CircularControlClickEvent.OnPlayPauseClicked -> {
                 viewModelScope.launch {
-                    playPauseButtonClickedUseCase(
+                    useCases.playPauseButtonClickedUseCase(
                         state = _playbackScreenState,
                         mp3PlayerEventChannel = _mp3PlayerEvent,
                         uri = playbackScreenState.value.mp3Items.firstOrNull()?.uri ?: Uri.parse("")
@@ -117,7 +109,7 @@ class MP3PlayerViewModel @Inject constructor(
 
             CircularControlClickEvent.OnMiddleButtonClicked -> {
                 viewModelScope.launch {
-                    middleButtonClickedUseCase(
+                    useCases.middleButtonClickedUseCase(
                         state = _playbackScreenState,
                         mp3PlayerEventChannel = _mp3PlayerEvent
                     )
