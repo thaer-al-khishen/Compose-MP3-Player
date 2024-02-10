@@ -10,10 +10,8 @@ import javax.inject.Singleton
 @Singleton
 class UpdateMp3ItemsUseCase @Inject constructor() {
 
-    operator fun invoke(state: MutableStateFlow<PlaybackScreenState>, mp3Items: List<Mp3Item>) {
-        state.update {
-            it.copy(mp3Items = mp3Items)
-        }
+    operator fun invoke(state: PlaybackScreenState, mp3Items: List<Mp3Item>): PlaybackScreenState {
+        return state.copy(mp3Items = mp3Items)
     }
 
 }

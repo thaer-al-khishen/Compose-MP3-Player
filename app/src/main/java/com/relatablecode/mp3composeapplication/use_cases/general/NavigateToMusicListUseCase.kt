@@ -10,12 +10,8 @@ import javax.inject.Singleton
 @Singleton
 class NavigateToMusicListUseCase @Inject constructor() {
 
-    operator fun invoke(state: MutableStateFlow<PlaybackScreenState>) {
-        state.update {
-            it.copy(
-                playbackScreenEnum = PlaybackScreenEnum.MUSIC_LIST
-            )
-        }
+    operator fun invoke(state: PlaybackScreenState): PlaybackScreenState {
+        return state.copy(playbackScreenEnum = PlaybackScreenEnum.MUSIC_LIST, isMenuVisible = true)
     }
 
 }

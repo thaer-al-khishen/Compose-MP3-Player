@@ -9,8 +9,9 @@ import javax.inject.Singleton
 @Singleton
 class MenuButtonClickedUseCase @Inject constructor() {
 
-    operator fun invoke(state: MutableStateFlow<PlaybackScreenState>) {
-        state.update { it.copy(isMenuVisible = !it.isMenuVisible) }
+    operator fun invoke(currentIsMenuVisible: Boolean): Boolean {
+        // Determine the new menu visibility based on the current state or other logic
+        return !currentIsMenuVisible
     }
 
 }

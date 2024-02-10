@@ -3,6 +3,7 @@ package com.relatablecode.mp3composeapplication.use_cases
 import com.relatablecode.mp3composeapplication.use_cases.controls.FastForwardButtonClickedUseCase
 import com.relatablecode.mp3composeapplication.use_cases.controls.MenuButtonClickedUseCase
 import com.relatablecode.mp3composeapplication.use_cases.controls.MiddleButtonClickedUseCase
+import com.relatablecode.mp3composeapplication.use_cases.controls.MiddleButtonLongClickedUseCase
 import com.relatablecode.mp3composeapplication.use_cases.controls.PlayPauseButtonClickedUseCase
 import com.relatablecode.mp3composeapplication.use_cases.controls.RewindButtonClickedUseCase
 import com.relatablecode.mp3composeapplication.use_cases.general.NavigateToMusicListUseCase
@@ -23,6 +24,7 @@ data class MP3PlayerUseCases @Inject constructor(
     val fastForwardButtonClickedUseCase: FastForwardButtonClickedUseCase,
     val playPauseButtonClickedUseCase: PlayPauseButtonClickedUseCase,
     val middleButtonClickedUseCase: MiddleButtonClickedUseCase,
+    val middleButtonLongClickedUseCase: MiddleButtonLongClickedUseCase,
     val updateMp3ItemsUseCase: UpdateMp3ItemsUseCase,
     val navigateToMusicListUseCase: NavigateToMusicListUseCase
 )

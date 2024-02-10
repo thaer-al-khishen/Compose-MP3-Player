@@ -2,62 +2,45 @@ package com.relatablecode.mp3composeapplication.use_cases.controls
 
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenEnum
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class FastForwardButtonClickedUseCase @Inject constructor() {
 
-    operator fun invoke(state: MutableStateFlow<PlaybackScreenState>) {
+    // Adjust to accept the current state and return the new state
+    operator fun invoke(currentState: PlaybackScreenState): PlaybackScreenState {
+        val isMenuVisible = currentState.isMenuVisible
+        val isInsideMusicListWithoutMenu =
+            !currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST
+        val isInsideSongsWithoutMenu =
+            !currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.SONG
 
-        val isMenuVisible = state.value.isMenuVisible
-        val isInsideMusicListWithoutMenu = !state.value.isMenuVisible && state.value.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST
-        val isInsideSongsWithoutMenu = !state.value.isMenuVisible && state.value.playbackScreenEnum == PlaybackScreenEnum.SONG
+        return when {
+            isMenuVisible -> currentState.copy(
+                playbackScreenEnum = getNextPlaybackScreen(
+                    currentState.playbackScreenEnum
+                )
+            )
 
-        when {
-            isMenuVisible -> {
-                goRightInMenu(state)
-            }
-
-            isInsideMusicListWithoutMenu -> {
-                goDownInMusicList(state)
-            }
-
-            isInsideSongsWithoutMenu -> {
-                //Go to next song
-                showMenu(state)
-            }
-
-            else -> {
-                showMenu(state)
-            }
+            isInsideMusicListWithoutMenu -> goDownInMusicList(currentState)
+            isInsideSongsWithoutMenu -> currentState.copy(isMenuVisible = true) // Show menu for other cases
+            else -> currentState.copy(isMenuVisible = true)
         }
     }
 
-    private fun goRightInMenu(state: MutableStateFlow<PlaybackScreenState>) {
-        state.update { it.copy(playbackScreenEnum = getNextPlaybackScreen(it.playbackScreenEnum)) }
-    }
-
-    private fun goDownInMusicList(state: MutableStateFlow<PlaybackScreenState>) {
-        val currentIndex = state.value.mp3Items.indexOfFirst { it.isSelected }
-        val nextIndex = (currentIndex + 1) % state.value.mp3Items.size
-        state.update { currentState ->
-            val updatedItems = currentState.mp3Items.mapIndexed { index, item ->
-                item.copy(isSelected = index == nextIndex)
-            }
-            currentState.copy(mp3Items = updatedItems)
+    private fun goDownInMusicList(currentState: PlaybackScreenState): PlaybackScreenState {
+        val currentIndex = currentState.mp3Items.indexOfFirst { it.isSelected }
+        val nextIndex = (currentIndex + 1) % currentState.mp3Items.size
+        val updatedItems = currentState.mp3Items.mapIndexed { index, item ->
+            item.copy(isSelected = index == nextIndex)
         }
+        return currentState.copy(mp3Items = updatedItems)
     }
 
     private fun getNextPlaybackScreen(currentScreen: PlaybackScreenEnum): PlaybackScreenEnum {
         val nextOrdinal = (currentScreen.ordinal + 1) % PlaybackScreenEnum.values().size
         return PlaybackScreenEnum.values()[nextOrdinal]
-    }
-
-    private fun showMenu(state: MutableStateFlow<PlaybackScreenState>) {
-        state.update { it.copy(isMenuVisible = true) }
     }
 
 }

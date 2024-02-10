@@ -8,5 +8,6 @@ data class PlaybackScreenState(
     var isMenuVisible: Boolean = true,
     var mp3Items: List<Mp3Item> = listOf(),
     var isPlayingSong: Boolean = false,
-    var songBeingPlayed: Mp3Item? = null
+    var songBeingPlayed: Mp3Item? = null,
+    var isShowingDeleteDialog: Boolean = false
 )

@@ -8,22 +8,16 @@ import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenEnum
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
 import com.relatablecode.mp3composeapplication.use_cases.MP3PlayerUseCases
-import com.relatablecode.mp3composeapplication.use_cases.controls.FastForwardButtonClickedUseCase
-import com.relatablecode.mp3composeapplication.use_cases.controls.MenuButtonClickedUseCase
-import com.relatablecode.mp3composeapplication.use_cases.controls.MiddleButtonClickedUseCase
-import com.relatablecode.mp3composeapplication.use_cases.controls.PlayPauseButtonClickedUseCase
-import com.relatablecode.mp3composeapplication.use_cases.controls.RewindButtonClickedUseCase
-import com.relatablecode.mp3composeapplication.use_cases.general.NavigateToMusicListUseCase
-import com.relatablecode.mp3composeapplication.use_cases.general.UpdateMp3ItemsUseCase
-import com.relatablecode.mp3composeapplication.use_cases.uri.DeleteUriUseCase
-import com.relatablecode.mp3composeapplication.use_cases.uri.GetUrisUseCase
-import com.relatablecode.mp3composeapplication.use_cases.uri.SaveUriUseCase
+import com.relatablecode.mp3composeapplication.use_cases.controls.MiddleButtonAction
+import com.relatablecode.mp3composeapplication.use_cases.controls.MiddleButtonLongClickedAction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -77,53 +71,184 @@ class MP3PlayerViewModel @Inject constructor(
         }
     }
 
-    fun updateMp3Items(mp3Items: List<Mp3Item>) {
+    fun deleteSong() {
         viewModelScope.launch {
-            useCases.updateMp3ItemsUseCase(
-                state = _playbackScreenState,
-                mp3Items = mp3Items
-            )
+            val currentState = playbackScreenState.value
+            val currentSongs = currentState.mp3Items
+            val selectedSongIndex = currentSongs.indexOfFirst { it.isSelected }
+
+            if (selectedSongIndex != -1) {
+                // Determine the index for new selection
+                val newSelectedIndex = when {
+                    currentSongs.size == 1 -> -1 // If only one song, no selection after deletion
+                    selectedSongIndex == 0 -> 0 // If the first song is selected and deleted, select the next song which will move to the first position
+                    else -> selectedSongIndex - 1 // Otherwise, select the previous song
+                }
+
+                // Delete the selected song URI from the repository
+                val uriToDelete = currentSongs[selectedSongIndex].uri
+                useCases.deleteUriUseCase(uriToDelete)
+
+                // Wait for the deletion to reflect in the observed URIs list
+                delay(100) // This delay is hypothetical and depends on how quickly your app can process URI deletions
+
+                // Update the list of songs without the deleted one and apply the new selection
+                val updatedSongsWithoutDeleted = currentState.mp3Items.filter { it.uri != uriToDelete }
+                val updatedSongsWithNewSelection = updatedSongsWithoutDeleted.mapIndexed { index, item ->
+                    item.copy(isSelected = index == newSelectedIndex)
+                }
+
+                // Update state with the new song list and selection
+                _playbackScreenState.update { it.copy(mp3Items = updatedSongsWithNewSelection) }
+            }
         }
     }
 
+    fun updateMp3Items(mp3Items: List<Mp3Item>) {
+        val newState =
+            useCases.updateMp3ItemsUseCase(state = playbackScreenState.value, mp3Items = mp3Items)
+        _playbackScreenState.update { newState }
+    }
+
     fun navigateToMusicList() {
-        useCases.navigateToMusicListUseCase(state = _playbackScreenState)
+        val newState = useCases.navigateToMusicListUseCase(state = playbackScreenState.value)
+        _playbackScreenState.update { newState }
     }
 
     fun onEvent(event: CircularControlClickEvent) {
         when (event) {
             CircularControlClickEvent.OnMenuClicked -> {
-                useCases.menuButtonClickedUseCase(state = _playbackScreenState)
+                val newIsMenuVisible =
+                    useCases.menuButtonClickedUseCase(playbackScreenState.value.isMenuVisible)
+                _playbackScreenState.update { currentState ->
+                    currentState.copy(isMenuVisible = newIsMenuVisible)
+                }
             }
 
             CircularControlClickEvent.OnRewindClicked -> {
-                useCases.rewindButtonClickedUseCase(state = _playbackScreenState)
+                val newState = useCases.rewindButtonClickedUseCase(playbackScreenState.value)
+                _playbackScreenState.update { newState }
             }
 
             CircularControlClickEvent.OnFastForwardClicked -> {
-                useCases.fastForwardButtonClickedUseCase(state = _playbackScreenState)
+                val newState = useCases.fastForwardButtonClickedUseCase(playbackScreenState.value)
+                _playbackScreenState.update { newState }
             }
 
             CircularControlClickEvent.OnPlayPauseClicked -> {
                 viewModelScope.launch {
-                    useCases.playPauseButtonClickedUseCase(
-                        state = _playbackScreenState,
-                        mp3PlayerEventChannel = _mp3PlayerEvent,
-                        uri = playbackScreenState.value.mp3Items.firstOrNull()?.uri ?: Uri.parse("")
+                    val playPauseMusicResult = useCases.playPauseButtonClickedUseCase(
+                        playbackScreenState.value,
+                        playbackScreenState.value.mp3Items.firstOrNull()?.uri ?: Uri.EMPTY
                     )
+                    if (playPauseMusicResult.first) {
+                        playMusic(playPauseMusicResult.second)
+                    } else {
+                        pauseMusic()
+                    }
                 }
             }
 
             CircularControlClickEvent.OnMiddleButtonClicked -> {
                 viewModelScope.launch {
-                    useCases.middleButtonClickedUseCase(
-                        state = _playbackScreenState,
-                        mp3PlayerEventChannel = _mp3PlayerEvent
-                    )
+                    val action = useCases.middleButtonClickedUseCase(playbackScreenState.value)
+                    when (action) {
+                        MiddleButtonAction.AccessMedia -> _mp3PlayerEvent.send(MP3PlayerEvent.AccessMediaMultipleFiles)
+                        MiddleButtonAction.HideMenuSelectFirstSong -> {
+                            // Logic to hide the menu and select the first song, if any
+                            if (_playbackScreenState.value.mp3Items.isEmpty()) {
+                                _mp3PlayerEvent.send(MP3PlayerEvent.AccessMediaMultipleFiles)
+                            } else {
+                                //Select first song by default if no song is selected yet
+                                _playbackScreenState.update {
+                                    it.copy(
+                                        isMenuVisible = false,
+                                        mp3Items = it.mp3Items.also { mp3Items ->
+                                            (mp3Items.firstOrNull { it.isSelected })?.let {}
+                                                ?: run {
+                                                    mp3Items[0].isSelected = true
+                                                }
+                                        })
+                                }
+                            }
+                        }
+
+                        MiddleButtonAction.PlaySelectedSong -> {
+                            // Logic to play the selected song or navigate to the song screen
+                            playbackScreenState.value.mp3Items.firstOrNull { it.isSelected }?.let {
+                                _playbackScreenState.update {
+                                    it.copy(
+                                        isMenuVisible = false,
+                                        mp3Items = it.mp3Items.also { mp3Items ->
+                                            (mp3Items.firstOrNull { it.isSelected })?.let {}
+                                                ?: run {
+                                                    mp3Items[0].isSelected = true
+                                                }
+                                        })
+                                }
+                            }
+                            if (!_playbackScreenState.value.isPlayingSong) {
+                                playMusic(
+                                    _playbackScreenState.value.mp3Items.find { it.isSelected }?.uri
+                                        ?: Uri.parse("")
+                                )
+                            } else {
+                                //If there is a song currently playing, pause it and play the selected song
+                                pauseMusic()
+                                playMusic(
+                                    _playbackScreenState.value.mp3Items.find { it.isSelected }?.uri
+                                        ?: Uri.parse("")
+                                )
+                            }
+                        }
+
+                        MiddleButtonAction.ShowMenu -> _playbackScreenState.update {
+                            it.copy(
+                                isMenuVisible = true
+                            )
+                        }
+                    }
+                }
+            }
+
+            CircularControlClickEvent.OnMiddleButtonLongClicked -> {
+                val action =
+                    useCases.middleButtonLongClickedUseCase(currentState = playbackScreenState.value)
+                when (action) {
+                    MiddleButtonLongClickedAction.DELETE_SONG -> {
+                        viewModelScope.launch {
+                            _mp3PlayerEvent.send(MP3PlayerEvent.ShowDeleteSongUI)
+                        }
+                    }
+
+                    else -> {}
                 }
             }
 
             CircularControlClickEvent.Default -> {}
+
+        }
+
+    }
+
+    private suspend fun playMusic(uri: Uri) {
+        _mp3PlayerEvent.send(MP3PlayerEvent.PlaySong(uri))
+        _playbackScreenState.update { currentState ->
+            currentState.copy(isMenuVisible = true,
+                playbackScreenEnum = PlaybackScreenEnum.SONG,
+                isPlayingSong = true,
+                songBeingPlayed = currentState.mp3Items.find { it.uri == uri })
+        }
+    }
+
+    private suspend fun pauseMusic() {
+        _mp3PlayerEvent.send(MP3PlayerEvent.PauseSong)
+        _playbackScreenState.update {
+            it.copy(
+                playbackScreenEnum = PlaybackScreenEnum.SONG,
+                isPlayingSong = false,
+                songBeingPlayed = null
+            )
         }
     }
 

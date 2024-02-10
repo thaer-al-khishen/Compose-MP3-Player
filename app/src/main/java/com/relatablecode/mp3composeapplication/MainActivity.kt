@@ -17,6 +17,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -142,6 +143,20 @@ class MainActivity : ComponentActivity() {
                             is MP3PlayerEvent.PauseSong -> {
                                 stopMusic()
                             }
+                            is MP3PlayerEvent.ShowDeleteSongUI -> {
+                                AlertDialog.Builder(this@MainActivity).apply {
+                                    setTitle("Delete Song")
+                                    setMessage("Are you sure you want to delete this song?")
+                                    setPositiveButton("Yes") { dialog, _ ->
+                                        deleteSong()
+                                        dialog.dismiss()
+                                    }
+                                    setNegativeButton("No") { dialog, _ ->
+                                        dialog.dismiss()
+                                    }
+                                    show()
+                                }
+                            }
                         }
                     }
                 }
@@ -227,6 +242,10 @@ class MainActivity : ComponentActivity() {
 
     private fun deleteUri(uri: Uri) {
         viewModel.deleteUri(uri)
+    }
+
+    private fun deleteSong() {
+        viewModel.deleteSong()
     }
 
     private fun navigateToMusicList() {
