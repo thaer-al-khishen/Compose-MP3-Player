@@ -3,48 +3,38 @@ package com.relatablecode.mp3composeapplication
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
-import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.util.Log
-import android.view.View
-import android.view.WindowInsetsController
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.relatablecode.mp3composeapplication.datastore.PreferencesKeys
+import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.util.Util
+import androidx.media3.exoplayer.ExoPlayer
 import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
 import com.relatablecode.mp3composeapplication.mp3_player_device.MP3PlayerDevice
+import com.relatablecode.mp3composeapplication.utils.UriUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -53,44 +43,47 @@ class MainActivity : ComponentActivity() {
 
     // For a single audio file selection
     // Register the contract for picking a single document, allowing persistable permission.
-    private val pickAudioFile = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+    private val pickAudioFile =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
 
-        uri?.let {
-            try {
-                // Take persistable URI permission.
-                contentResolver.takePersistableUriPermission(
-                    it,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
+            uri?.let {
+                try {
+                    // Take persistable URI permission.
+                    contentResolver.takePersistableUriPermission(
+                        it,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
 
-                // Proceed to handle the URI
-                saveUri(it)
-                navigateToMusicList()
-            } catch (e: SecurityException) {
-                // Handle the exception, possibly by informing the user
-                Log.e("MainActivity", "Failed to take persistable URI permission", e)
+                    // Proceed to handle the URI
+                    saveUri(it)
+                    navigateToMusicList()
+                } catch (e: SecurityException) {
+                    // Handle the exception, possibly by informing the user
+                    Log.e("MainActivity", "Failed to take persistable URI permission", e)
+                }
             }
         }
-    }
 
     // For multiple audio file selections
-    private val pickMultipleAudioFiles = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri> ->
-        // Handle the returned URIs
-        uris.forEach { uri ->
-            try {
-                contentResolver.takePersistableUriPermission(
-                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            } catch (e: SecurityException) {
-                Log.e("MainActivity", "Failed to take persistable URI permission", e)
+    private val pickMultipleAudioFiles =
+        registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri> ->
+            // Handle the returned URIs
+            uris.forEach { uri ->
+                try {
+                    contentResolver.takePersistableUriPermission(
+                        uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (e: SecurityException) {
+                    Log.e("MainActivity", "Failed to take persistable URI permission", e)
+                }
             }
+            saveUris(uris) // Saves all at once, ensuring uniqueness
+            navigateToMusicList()
         }
-        saveUris(uris) // Saves all at once, ensuring uniqueness
-        navigateToMusicList()
-    }
 
     private val viewModel: MP3PlayerViewModel by viewModels()
 
-    private var mediaPlayer: MediaPlayer? = null
+    private lateinit var exoPlayer: ExoPlayer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,13 +91,20 @@ class MainActivity : ComponentActivity() {
         configureStatusBarFullScreenTransparency()
         setupObservers()
 
+        // Initialize ExoPlayer
+        exoPlayer = ExoPlayer.Builder(this).build().apply {
+            // Add media items, prepare and other initial setup if necessary
+        }
+
         setContent {
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
                 val playbackScreenState = viewModel.playbackScreenState.collectAsState()
-                MP3PlayerDevice(playbackScreenState.value, viewModel::onEvent)
+                MP3PlayerDevice(
+                    exoPlayer = exoPlayer, playbackScreenState.value, viewModel::onEvent
+                )
             }
         }
     }
@@ -130,22 +130,27 @@ class MainActivity : ComponentActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 withContext(Dispatchers.Main.immediate) {
                     viewModel.mp3PlayerEvent.collect {
-                        when(it) {
+                        when (it) {
                             is MP3PlayerEvent.AccessMediaSingleFile -> {
                                 showSingleFilePicker()
                             }
+
                             is MP3PlayerEvent.AccessMediaMultipleFiles -> {
                                 showMultipleFilePicker()
                             }
+
                             is MP3PlayerEvent.PlaySong -> {
                                 playMusic(it.uri)
                             }
+
                             is MP3PlayerEvent.ResumeSong -> {
                                 resumeMusic()
                             }
+
                             is MP3PlayerEvent.PauseSong -> {
                                 pauseMusic()
                             }
+
                             is MP3PlayerEvent.ShowDeleteSongUI -> {
                                 AlertDialog.Builder(this@MainActivity).apply {
                                     setTitle("Delete Song")
@@ -175,8 +180,9 @@ class MainActivity : ComponentActivity() {
                     // Iterate through each URI string
                     uriSet.forEach { uri ->
                         val title = getFileName(this@MainActivity, uri) ?: "Unknown Title"
+                        val duration = UriUtils.getSongDuration(this@MainActivity, uri)
                         // Create an Mp3Item and add it to the list
-                        mp3Items.add(Mp3Item(uri, title))
+                        mp3Items.add(Mp3Item(uri = uri, title = title, duration = duration))
                     }
 
                     // Update your PlaybackScreenState with the new list of Mp3Items
@@ -196,32 +202,67 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun playMusic(uri: Uri) {
-        mediaPlayer = MediaPlayer().apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .build()
-            )
-            setDataSource(this@MainActivity, uri)
-            prepare() // Consider using prepareAsync() for streaming over the network
-            start()
-        }
-        mediaPlayer?.start()
+        val mediaItem = MediaItem.fromUri(uri)
+        exoPlayer.setMediaItem(mediaItem)
+        exoPlayer.prepare()
+        exoPlayer.play()
     }
 
     private fun pauseMusic() {
-        mediaPlayer?.pause()
+        exoPlayer.pause()
     }
 
     private fun resumeMusic() {
-        mediaPlayer?.start()
+        if (!exoPlayer.isPlaying) {
+            exoPlayer.play()
+        }
     }
 
     private fun stopMusic() {
-        mediaPlayer?.stop()
-        mediaPlayer?.release()
-        mediaPlayer = null
+        exoPlayer.stop()
+        exoPlayer.clearMediaItems()
+    }
+
+    @OptIn(UnstableApi::class) override fun onStart() {
+        super.onStart()
+        if (Util.SDK_INT > 23) {
+            initializePlayer()
+        }
+    }
+
+    @OptIn(UnstableApi::class) override fun onResume() {
+        super.onResume()
+        if (Util.SDK_INT <= 23 || !::exoPlayer.isInitialized) {
+            initializePlayer()
+        }
+    }
+
+    @OptIn(UnstableApi::class) override fun onPause() {
+        if (Util.SDK_INT <= 23) {
+            releasePlayer()
+        }
+        super.onPause()
+    }
+
+    @OptIn(UnstableApi::class) override fun onStop() {
+        if (Util.SDK_INT > 23) {
+            releasePlayer()
+        }
+        super.onStop()
+    }
+
+    private fun initializePlayer() {
+        // Initialization logic here if needed
+    }
+
+    private fun releasePlayer() {
+        exoPlayer.release()
+    }
+
+    private fun preparePlayerWithUri(uri: Uri) {
+        val mediaItem = MediaItem.fromUri(uri)
+        exoPlayer.setMediaItem(mediaItem)
+        exoPlayer.prepare()
     }
 
     private fun getFileName(context: Context, uri: Uri): String? {

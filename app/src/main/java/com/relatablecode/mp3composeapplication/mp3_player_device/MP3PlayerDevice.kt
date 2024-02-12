@@ -7,13 +7,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
+import androidx.media3.exoplayer.ExoPlayer
 import com.relatablecode.mp3composeapplication.circular_control_panel.CircularControlClickEvent
 import com.relatablecode.mp3composeapplication.playback_screen.PlaybackScreen
 import com.relatablecode.mp3composeapplication.circular_control_panel.CircularControlPanel
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
 
 @Composable
-fun MP3PlayerDevice(playbackScreenState: PlaybackScreenState, onEvent: (CircularControlClickEvent) -> Unit) {
+fun MP3PlayerDevice(exoPlayer: ExoPlayer, playbackScreenState: PlaybackScreenState, onEvent: (CircularControlClickEvent) -> Unit) {
 
     ConstraintLayout(
         modifier = Modifier
@@ -32,7 +33,7 @@ fun MP3PlayerDevice(playbackScreenState: PlaybackScreenState, onEvent: (Circular
             end.linkTo(parent.end, 16.dp)
             width = Dimension.fillToConstraints
             height = Dimension.value(300.dp)
-        }, playbackScreenState)
+        }, playbackScreenState = playbackScreenState, exoPlayer = exoPlayer)
 
         CircularControlPanel(modifier = Modifier.constrainAs(buttons) {
             top.linkTo(guideline, 50.dp)

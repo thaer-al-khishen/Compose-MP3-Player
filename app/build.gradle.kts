@@ -68,6 +68,7 @@ dependencies {
 
     //DataStore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.media3:media3-exoplayer:1.2.1")
 
 
     testImplementation("junit:junit:4.13.2")

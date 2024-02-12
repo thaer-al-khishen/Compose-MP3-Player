@@ -2,6 +2,7 @@ package com.relatablecode.mp3composeapplication.playback_screen.middle_section
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.media3.exoplayer.ExoPlayer
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenEnum
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
 
@@ -9,7 +10,7 @@ import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScr
 fun PlaybackScreenMiddleRow(
     modifier: Modifier = Modifier, playbackScreenState: PlaybackScreenState = PlaybackScreenState(
         playbackScreenEnum = PlaybackScreenEnum.HOME, isMenuVisible = true
-    )
+    ), exoPlayer: ExoPlayer
 ) {
     when {
         playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST -> {
@@ -17,7 +18,7 @@ fun PlaybackScreenMiddleRow(
         }
 
         playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.SONG -> {
-            PlaybackScreenSong(playbackScreenState = playbackScreenState)
+            PlaybackScreenSong(playbackScreenState = playbackScreenState, exoPlayer = exoPlayer)
         }
 
         playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.SETTINGS -> {

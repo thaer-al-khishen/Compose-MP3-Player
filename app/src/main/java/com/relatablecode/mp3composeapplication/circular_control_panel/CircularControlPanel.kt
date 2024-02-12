@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.relatablecode.mp3composeapplication.R
 import com.relatablecode.mp3composeapplication.Theme
-import com.relatablecode.mp3composeapplication.playback_screen.BlackScreenContent
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
