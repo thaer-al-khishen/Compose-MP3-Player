@@ -140,8 +140,11 @@ class MainActivity : ComponentActivity() {
                             is MP3PlayerEvent.PlaySong -> {
                                 playMusic(it.uri)
                             }
+                            is MP3PlayerEvent.ResumeSong -> {
+                                resumeMusic()
+                            }
                             is MP3PlayerEvent.PauseSong -> {
-                                stopMusic()
+                                pauseMusic()
                             }
                             is MP3PlayerEvent.ShowDeleteSongUI -> {
                                 AlertDialog.Builder(this@MainActivity).apply {
@@ -204,6 +207,14 @@ class MainActivity : ComponentActivity() {
             prepare() // Consider using prepareAsync() for streaming over the network
             start()
         }
+        mediaPlayer?.start()
+    }
+
+    private fun pauseMusic() {
+        mediaPlayer?.pause()
+    }
+
+    private fun resumeMusic() {
         mediaPlayer?.start()
     }
 

@@ -139,10 +139,16 @@ class MP3PlayerViewModel @Inject constructor(
                 viewModelScope.launch {
                     val playPauseMusicResult = useCases.playPauseButtonClickedUseCase(
                         playbackScreenState.value,
-                        playbackScreenState.value.mp3Items.firstOrNull()?.uri ?: Uri.EMPTY
+                        playbackScreenState.value.songBeingPlayed?.uri ?: playbackScreenState.value.mp3Items.firstOrNull()?.uri
                     )
                     if (playPauseMusicResult.first) {
-                        playMusic(playPauseMusicResult.second)
+                        playbackScreenState.value.songBeingPlayed?.let {
+                            //Resume
+                            resumeMusic(playPauseMusicResult.second)
+                        } ?: run {
+                            //Play
+                            playMusic(playPauseMusicResult.second)
+                        }
                     } else {
                         pauseMusic()
                     }
@@ -187,17 +193,15 @@ class MP3PlayerViewModel @Inject constructor(
                                         })
                                 }
                             }
-                            if (!_playbackScreenState.value.isPlayingSong) {
+                            if (!playbackScreenState.value.isPlayingSong) {
                                 playMusic(
-                                    _playbackScreenState.value.mp3Items.find { it.isSelected }?.uri
-                                        ?: Uri.parse("")
+                                    playbackScreenState.value.mp3Items.find { it.isSelected }?.uri
                                 )
                             } else {
                                 //If there is a song currently playing, pause it and play the selected song
                                 pauseMusic()
                                 playMusic(
-                                    _playbackScreenState.value.mp3Items.find { it.isSelected }?.uri
-                                        ?: Uri.parse("")
+                                    playbackScreenState.value.mp3Items.find { it.isSelected }?.uri
                                 )
                             }
                         }
@@ -231,13 +235,27 @@ class MP3PlayerViewModel @Inject constructor(
 
     }
 
-    private suspend fun playMusic(uri: Uri) {
-        _mp3PlayerEvent.send(MP3PlayerEvent.PlaySong(uri))
-        _playbackScreenState.update { currentState ->
-            currentState.copy(isMenuVisible = true,
-                playbackScreenEnum = PlaybackScreenEnum.SONG,
-                isPlayingSong = true,
-                songBeingPlayed = currentState.mp3Items.find { it.uri == uri })
+    private suspend fun playMusic(uri: Uri?) {
+        uri?.let {
+            _mp3PlayerEvent.send(MP3PlayerEvent.PlaySong(uri))
+            _playbackScreenState.update { currentState ->
+                currentState.copy(isMenuVisible = true,
+                    playbackScreenEnum = PlaybackScreenEnum.SONG,
+                    isPlayingSong = true,
+                    songBeingPlayed = currentState.mp3Items.find { it.uri == uri })
+            }
+        }
+    }
+
+    private suspend fun resumeMusic(uri: Uri?) {
+        uri?.let {
+            _mp3PlayerEvent.send(MP3PlayerEvent.ResumeSong(uri))
+            _playbackScreenState.update { currentState ->
+                currentState.copy(isMenuVisible = true,
+                    playbackScreenEnum = PlaybackScreenEnum.SONG,
+                    isPlayingSong = true,
+                    songBeingPlayed = currentState.mp3Items.find { it.uri == uri })
+            }
         }
     }
 
@@ -246,8 +264,7 @@ class MP3PlayerViewModel @Inject constructor(
         _playbackScreenState.update {
             it.copy(
                 playbackScreenEnum = PlaybackScreenEnum.SONG,
-                isPlayingSong = false,
-                songBeingPlayed = null
+                isPlayingSong = false
             )
         }
     }

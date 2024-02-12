@@ -9,7 +9,7 @@ import javax.inject.Singleton
 class PlayPauseButtonClickedUseCase @Inject constructor() {
 
     // Returns a Boolean indicating whether music should be played (true) or paused (false)
-    operator fun invoke(currentState: PlaybackScreenState, uri: Uri): Pair<Boolean, Uri> {
+    operator fun invoke(currentState: PlaybackScreenState, uri: Uri?): Pair<Boolean, Uri?> {
         return Pair(!currentState.isPlayingSong, uri)
     }
 
