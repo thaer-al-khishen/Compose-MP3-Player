@@ -92,9 +92,7 @@ class MainActivity : ComponentActivity() {
         setupObservers()
 
         // Initialize ExoPlayer
-        exoPlayer = ExoPlayer.Builder(this).build().apply {
-            // Add media items, prepare and other initial setup if necessary
-        }
+        initializePlayer()
 
         setContent {
             Surface(
@@ -253,6 +251,9 @@ class MainActivity : ComponentActivity() {
 
     private fun initializePlayer() {
         // Initialization logic here if needed
+        exoPlayer = ExoPlayer.Builder(this).build().apply {
+            // Add media items, prepare and other initial setup if necessary
+        }
     }
 
     private fun releasePlayer() {

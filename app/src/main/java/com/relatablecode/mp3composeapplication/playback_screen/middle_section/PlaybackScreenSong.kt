@@ -15,7 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -24,11 +26,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import com.relatablecode.mp3composeapplication.Mp3Item
 import com.relatablecode.mp3composeapplication.R
 import com.relatablecode.mp3composeapplication.Theme
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
+import com.relatablecode.mp3composeapplication.timer.TimerViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -40,96 +45,79 @@ import kotlinx.coroutines.launch
 fun PlaybackScreenSong(
     modifier: Modifier = Modifier,
     playbackScreenState: PlaybackScreenState,
-    exoPlayer: ExoPlayer
+    exoPlayer: ExoPlayer,
+    timerViewModel: TimerViewModel = viewModel() // Ensures ViewModel is scoped correctly
 ) {
+    // Collecting state for current position and total duration
+    val currentPosition by timerViewModel.timer.collectAsState()
+    val duration by timerViewModel.duration.collectAsState()
 
-    val currentPosition = remember { Animatable(0f) }
-    val totalTime = remember { mutableStateOf(playbackScreenState.songBeingPlayed?.duration?.div(1000f) ?: 0f) }
-    val coroutineScope = rememberCoroutineScope()
+    // Reset and initialize timer on song change
+    LaunchedEffect(playbackScreenState.songBeingPlayed) {
+        timerViewModel.setTimerDuration(playbackScreenState.songBeingPlayed?.duration ?: 0L)
+        timerViewModel.stopTimer() // Consider if you want to reset the timer every time the song changes
+    }
 
+    // ExoPlayer state listener for play/pause actions
     DisposableEffect(exoPlayer) {
         val listener = object : Player.Listener {
-            override fun onPositionDiscontinuity(
-                oldPosition: Player.PositionInfo,
-                newPosition: Player.PositionInfo,
-                reason: Int
-            ) {
-                coroutineScope.launch { currentPosition.animateTo(exoPlayer.currentPosition / 1000f) }
-            }
-
             override fun onIsPlayingChanged(isPlaying: Boolean) {
-                if (isPlaying) {
-                    coroutineScope.launch {
-                        while (isActive) {
-                            currentPosition.animateTo(exoPlayer.currentPosition / 1000f)
-                            delay(500)
-                        }
-                    }
-                }
+                if (isPlaying) timerViewModel.startOrResumeTimer()
+                else timerViewModel.pauseTimer()
             }
-
         }
-
         exoPlayer.addListener(listener)
         onDispose { exoPlayer.removeListener(listener) }
     }
 
+    // UI for displaying song details and progress
+    SongDetailsUI(
+        modifier = modifier,
+        song = playbackScreenState.songBeingPlayed,
+        currentPosition = currentPosition,
+        duration = duration
+    )
+}
+
+@Composable
+fun SongDetailsUI(
+    modifier: Modifier,
+    song: Mp3Item?,
+    currentPosition: Long,
+    duration: Long
+) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+        modifier = modifier.fillMaxWidth().padding(16.dp),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Icon, Spacer, and Song title...
-        Icon(
-            painter = painterResource(id = R.drawable.ic_music_note_single),
-            tint = Theme.PlaybackScreenMiddleImageColor,
-            contentDescription = "Song",
-            modifier = Modifier.size(50.dp)
-        )
+        Icon(painter = painterResource(id = R.drawable.ic_music_note_single), contentDescription = "Song", modifier = Modifier.size(50.dp))
         Spacer(modifier = Modifier.height(8.dp))
 
-        playbackScreenState.songBeingPlayed?.let {
-
-            Text(text = it.title, color = Theme.PlaybackScreenContentColor, fontSize = 16.sp)
-
+        song?.let {
+            Text(text = it.title, fontSize = 16.sp)
             Spacer(modifier = Modifier.height(8.dp))
-
-            // Seekbar for the song (read-only)
             Slider(
-                value = currentPosition.value.coerceAtLeast(0f),
-                onValueChange = { /* Intentionally left blank to disable manual seek */ },
-                valueRange = 0f..totalTime.value,
-                enabled = false, // Disable touch interaction
+                value = currentPosition.coerceAtLeast(0L).toFloat(),
+                onValueChange = { },
+                valueRange = 0f..duration.toFloat(),
+                enabled = false,
                 modifier = Modifier.fillMaxWidth()
             )
-
-            // Start and end time texts
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = formatSeconds(currentPosition.value),
-                    color = Theme.PlaybackScreenContentColor
-                )
-                Text(
-                    text = formatSeconds(totalTime.value),
-                    color = Theme.PlaybackScreenContentColor
-                )
-            }
-
-        } ?: run {
-            Text(
-                text = "No song playing yet",
-                color = Theme.PlaybackScreenContentColor,
-                fontSize = 16.sp
-            )
-        }
-
+            TimeDisplay(currentPosition = currentPosition, duration = duration)
+        } ?: Text("No song playing yet")
     }
+}
 
+@Composable
+fun TimeDisplay(currentPosition: Long, duration: Long) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = formatSeconds(currentPosition.div(1000).toFloat()), color = Theme.PlaybackScreenContentColor)
+        Text(text = formatSeconds(duration.div(1000).toFloat()), color = Theme.PlaybackScreenContentColor)
+    }
 }
 
 // Helper function to format seconds into a mm:ss string
