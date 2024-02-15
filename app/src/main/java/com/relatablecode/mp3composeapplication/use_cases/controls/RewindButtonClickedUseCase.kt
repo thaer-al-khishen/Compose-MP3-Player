@@ -15,10 +15,11 @@ class RewindButtonClickedUseCase @Inject constructor() {
         val isInsideMusicListWithoutMenu = !currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST
         val isInsideSongsWithoutMenu = !currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.SONG
 
+
         return when {
             isMenuVisible -> currentState.copy(playbackScreenEnum = getPreviousPlaybackScreen(currentState.playbackScreenEnum))
             isInsideMusicListWithoutMenu -> goUpInMusicList(currentState)
-            isInsideSongsWithoutMenu -> currentState.copy(isMenuVisible = true) // Show menu for other cases
+            isInsideSongsWithoutMenu -> goUpInMusicList(currentState) // Show menu for other cases
             else -> currentState.copy(isMenuVisible = true)
         }
     }

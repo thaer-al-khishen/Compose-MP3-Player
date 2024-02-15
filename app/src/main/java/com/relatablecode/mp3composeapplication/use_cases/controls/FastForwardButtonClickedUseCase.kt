@@ -24,7 +24,9 @@ class FastForwardButtonClickedUseCase @Inject constructor() {
             )
 
             isInsideMusicListWithoutMenu -> goDownInMusicList(currentState)
-            isInsideSongsWithoutMenu -> currentState.copy(isMenuVisible = true) // Show menu for other cases
+            isInsideSongsWithoutMenu -> {
+                goDownInMusicList(currentState)
+            }
             else -> currentState.copy(isMenuVisible = true)
         }
     }

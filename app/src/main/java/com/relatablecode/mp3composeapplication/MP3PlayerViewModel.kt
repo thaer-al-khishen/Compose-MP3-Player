@@ -126,13 +126,29 @@ class MP3PlayerViewModel @Inject constructor(
             }
 
             CircularControlClickEvent.OnRewindClicked -> {
-                val newState = useCases.rewindButtonClickedUseCase(playbackScreenState.value)
-                _playbackScreenState.update { newState }
+                viewModelScope.launch {
+                    //Check if the user is trying to fast forward a song, or just navigate the menu
+                    val currentState = playbackScreenState.value
+                    val newState = useCases.rewindButtonClickedUseCase(currentState)
+                    if (currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible) {
+                        playNextOrPreviousSong(newState)
+                    } else {
+                        _playbackScreenState.update { newState }
+                    }
+                }
             }
 
             CircularControlClickEvent.OnFastForwardClicked -> {
-                val newState = useCases.fastForwardButtonClickedUseCase(playbackScreenState.value)
-                _playbackScreenState.update { newState }
+                viewModelScope.launch {
+                    //Check if the user is trying to fast forward a song, or just navigate the menu
+                    val currentState = playbackScreenState.value
+                    val newState = useCases.fastForwardButtonClickedUseCase(currentState)
+                    if (currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible) {
+                        playNextOrPreviousSong(newState)
+                    } else {
+                        _playbackScreenState.update { newState }
+                    }
+                }
             }
 
             CircularControlClickEvent.OnPlayPauseClicked -> {
@@ -146,6 +162,13 @@ class MP3PlayerViewModel @Inject constructor(
                             //Resume
                             resumeMusic(playPauseMusicResult.second)
                         } ?: run {
+
+                            //Check if this is the first song being played and triggered with the OnPlayPauseClicked button
+                            //In this case select the first song
+                            playbackScreenState.value.songBeingPlayed ?: run {
+                                playbackScreenState.value.mp3Items[0].isSelected = true
+                            }
+
                             //Play
                             playMusic(playPauseMusicResult.second)
                         }
@@ -211,6 +234,12 @@ class MP3PlayerViewModel @Inject constructor(
                                 isMenuVisible = true
                             )
                         }
+
+                        MiddleButtonAction.HideMenu -> _playbackScreenState.update {
+                            it.copy(
+                                isMenuVisible = false
+                            )
+                        }
                     }
                 }
             }
@@ -266,6 +295,16 @@ class MP3PlayerViewModel @Inject constructor(
                 playbackScreenEnum = PlaybackScreenEnum.SONG,
                 isPlayingSong = false
             )
+        }
+    }
+
+    //Triggered by the rewind and fast forward button clicked inside the song UI without a menu
+    private suspend fun playNextOrPreviousSong(state: PlaybackScreenState) {
+        state.mp3Items.firstOrNull { it.isSelected }?.uri?.let { selectedUri ->
+            pauseMusic()
+            playMusic(selectedUri)
+            state.songBeingPlayed = state.mp3Items.find { it.uri == selectedUri }
+            _playbackScreenState.update { state }
         }
     }
 

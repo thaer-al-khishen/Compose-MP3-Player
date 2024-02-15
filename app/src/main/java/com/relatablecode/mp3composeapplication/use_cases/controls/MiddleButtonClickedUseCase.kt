@@ -17,6 +17,8 @@ class MiddleButtonClickedUseCase @Inject constructor() {
         val isInsideHome = currentState.playbackScreenEnum == PlaybackScreenEnum.HOME
         val isInsideMusicWithMenu =
             currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST
+        val isInsideSongsWithMenu =
+            currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.SONG
         val isInsideMusicWithoutMenuWithSongs =
             !currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST && currentState.mp3Items.isNotEmpty()
 
@@ -30,6 +32,7 @@ class MiddleButtonClickedUseCase @Inject constructor() {
             }
             isInsideMusicWithoutMenuWithSongs -> MiddleButtonAction.PlaySelectedSong
             isInsideMusicWithoutMenuWithoutSongs -> MiddleButtonAction.AccessMedia
+            isInsideSongsWithMenu -> MiddleButtonAction.HideMenu
             else -> MiddleButtonAction.ShowMenu
         }
     }
@@ -40,5 +43,6 @@ enum class MiddleButtonAction {
     AccessMedia,
     HideMenuSelectFirstSong,
     PlaySelectedSong,
-    ShowMenu
+    ShowMenu,
+    HideMenu
 }
