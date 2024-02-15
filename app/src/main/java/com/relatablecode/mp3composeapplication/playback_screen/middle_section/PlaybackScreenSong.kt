@@ -33,6 +33,7 @@ import com.relatablecode.mp3composeapplication.Mp3Item
 import com.relatablecode.mp3composeapplication.R
 import com.relatablecode.mp3composeapplication.Theme
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
+import com.relatablecode.mp3composeapplication.timer.TimerManager
 import com.relatablecode.mp3composeapplication.timer.TimerViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -46,29 +47,10 @@ fun PlaybackScreenSong(
     modifier: Modifier = Modifier,
     playbackScreenState: PlaybackScreenState,
     exoPlayer: ExoPlayer,
-    timerViewModel: TimerViewModel = viewModel() // Ensures ViewModel is scoped correctly
 ) {
     // Collecting state for current position and total duration
-    val currentPosition by timerViewModel.timer.collectAsState()
-    val duration by timerViewModel.duration.collectAsState()
-
-    // Reset and initialize timer on song change
-    LaunchedEffect(playbackScreenState.songBeingPlayed) {
-        timerViewModel.setTimerDuration(playbackScreenState.songBeingPlayed?.duration ?: 0L)
-        timerViewModel.stopTimer() // Consider if you want to reset the timer every time the song changes
-    }
-
-    // ExoPlayer state listener for play/pause actions
-    DisposableEffect(exoPlayer) {
-        val listener = object : Player.Listener {
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                if (isPlaying) timerViewModel.startOrResumeTimer()
-                else timerViewModel.pauseTimer()
-            }
-        }
-        exoPlayer.addListener(listener)
-        onDispose { exoPlayer.removeListener(listener) }
-    }
+    val currentPosition by TimerManager.timer.collectAsState()
+    val duration by TimerManager.duration.collectAsState()
 
     // UI for displaying song details and progress
     SongDetailsUI(

@@ -2,8 +2,6 @@ package com.relatablecode.mp3composeapplication
 
 import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -26,11 +24,17 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
 import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
+import com.relatablecode.mp3composeapplication.event_broadcaster.EventBroadcaster
+import com.relatablecode.mp3composeapplication.event_broadcaster.EventListener
 import com.relatablecode.mp3composeapplication.mp3_player_device.MP3PlayerDevice
+import com.relatablecode.mp3composeapplication.service.MusicPlaybackService
+import com.relatablecode.mp3composeapplication.service.ServiceAction
+import com.relatablecode.mp3composeapplication.timer.TimerManager
 import com.relatablecode.mp3composeapplication.utils.UriUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +43,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), EventListener {
 
     // For a single audio file selection
     // Register the contract for picking a single document, allowing persistable permission.
@@ -85,6 +89,8 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var exoPlayer: ExoPlayer
 
+    private var songUri: Uri? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -93,6 +99,8 @@ class MainActivity : ComponentActivity() {
 
         // Initialize ExoPlayer
         initializePlayer()
+        EventBroadcaster.registerListener(this)
+        observeExoPlayerStateChanges()
 
         setContent {
             Surface(
@@ -200,53 +208,39 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun playMusic(uri: Uri) {
-        val mediaItem = MediaItem.fromUri(uri)
-        exoPlayer.setMediaItem(mediaItem)
-        exoPlayer.prepare()
-        exoPlayer.play()
+        songUri = uri
+        val serviceIntent = Intent(this, MusicPlaybackService::class.java).apply {
+            action = ServiceAction.PLAY_MUSIC.toString()
+        }
+        startService(serviceIntent)
     }
 
     private fun pauseMusic() {
-        exoPlayer.pause()
+        val serviceIntent = Intent(this, MusicPlaybackService::class.java).apply {
+            action = ServiceAction.PAUSE_MUSIC.toString()
+        }
+        startService(serviceIntent)
     }
 
     private fun resumeMusic() {
-        if (!exoPlayer.isPlaying) {
-            exoPlayer.play()
+        val serviceIntent = Intent(this, MusicPlaybackService::class.java).apply {
+            action = ServiceAction.RESUME_MUSIC.toString()
         }
+        startService(serviceIntent)
     }
 
     private fun stopMusic() {
         exoPlayer.stop()
         exoPlayer.clearMediaItems()
+        exoPlayer.release()
     }
 
-    @OptIn(UnstableApi::class) override fun onStart() {
-        super.onStart()
-        if (Util.SDK_INT > 23) {
-            initializePlayer()
+    override fun onDestroy() {
+        super.onDestroy()
+        val serviceIntent = Intent(this, MusicPlaybackService::class.java).apply {
+            action = ServiceAction.STOP_MUSIC.toString()
         }
-    }
-
-    @OptIn(UnstableApi::class) override fun onResume() {
-        super.onResume()
-        if (Util.SDK_INT <= 23 || !::exoPlayer.isInitialized) {
-            initializePlayer()
-        }
-    }
-
-    @OptIn(UnstableApi::class) override fun onPause() {
-        if (Util.SDK_INT <= 23) {
-            releasePlayer()
-        }
-        super.onPause()
-    }
-
-    @OptIn(UnstableApi::class) override fun onStop() {
-        if (Util.SDK_INT > 23) {
-            releasePlayer()
-        }
-        super.onStop()
+        startService(serviceIntent)
     }
 
     private fun initializePlayer() {
@@ -254,10 +248,6 @@ class MainActivity : ComponentActivity() {
         exoPlayer = ExoPlayer.Builder(this).build().apply {
             // Add media items, prepare and other initial setup if necessary
         }
-    }
-
-    private fun releasePlayer() {
-        exoPlayer.release()
     }
 
     private fun preparePlayerWithUri(uri: Uri) {
@@ -303,6 +293,51 @@ class MainActivity : ComponentActivity() {
 
     private fun navigateToMusicList() {
         viewModel.navigateToMusicList()
+    }
+
+    private fun observeExoPlayerStateChanges() {
+        val listener = object : Player.Listener {
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                if (isPlaying) TimerManager.startOrResumeTimer()
+                else TimerManager.pauseTimer()
+            }
+        }
+        exoPlayer.addListener(listener)
+    }
+
+    override fun onEventReceived(action: ServiceAction?) {
+        when (action) {
+            ServiceAction.PLAY_MUSIC -> {
+                songUri?.let {
+                    TimerManager.stopTimer()
+                    TimerManager.setTimerDuration(viewModel.playbackScreenState.value.songBeingPlayed?.duration ?: 0L)
+                    TimerManager.startOrResumeTimer() // Consider if you want to reset the timer every time the song changes
+                    val mediaItem = MediaItem.fromUri(it)
+                    exoPlayer.setMediaItem(mediaItem)
+                    exoPlayer.prepare()
+                    exoPlayer.play()
+                }
+            }
+
+            ServiceAction.RESUME_MUSIC -> {
+                if (!exoPlayer.isPlaying) {
+                    TimerManager.startOrResumeTimer() // Consider if you want to reset the timer every time the song changes
+                    exoPlayer.play()
+                }
+            }
+
+            ServiceAction.PAUSE_MUSIC -> {
+                TimerManager.pauseTimer()
+                exoPlayer.pause()
+            }
+
+            ServiceAction.STOP_MUSIC -> {
+                TimerManager.stopTimer()
+                stopMusic()
+            }
+
+            else -> {}
+        }
     }
 
 }
