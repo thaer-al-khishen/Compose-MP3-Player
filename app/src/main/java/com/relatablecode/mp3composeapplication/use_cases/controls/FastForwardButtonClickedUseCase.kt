@@ -23,9 +23,22 @@ class FastForwardButtonClickedUseCase @Inject constructor() {
                 )
             )
 
-            isInsideMusicListWithoutMenu -> goDownInMusicList(currentState)
+            isInsideMusicListWithoutMenu -> {
+                //Go down the list if there is a list, else show the menu
+                if (currentState.mp3Items.isNotEmpty()) {
+                    goDownInMusicList(currentState)
+                } else {
+                    currentState.copy(isMenuVisible = true)
+                }
+            }
+
             isInsideSongsWithoutMenu -> {
-                goDownInMusicList(currentState)
+                //Go down the list if there is a list, else show the menu
+                if (currentState.mp3Items.isNotEmpty()) {
+                    goDownInMusicList(currentState)
+                } else {
+                    currentState.copy(isMenuVisible = true)
+                }
             }
             else -> currentState.copy(isMenuVisible = true)
         }

@@ -12,14 +12,37 @@ class RewindButtonClickedUseCase @Inject constructor() {
     operator fun invoke(currentState: PlaybackScreenState): PlaybackScreenState {
 
         val isMenuVisible = currentState.isMenuVisible
-        val isInsideMusicListWithoutMenu = !currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST
-        val isInsideSongsWithoutMenu = !currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.SONG
+        val isInsideMusicListWithoutMenu =
+            !currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST
+        val isInsideSongsWithoutMenu =
+            !currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.SONG
 
 
         return when {
-            isMenuVisible -> currentState.copy(playbackScreenEnum = getPreviousPlaybackScreen(currentState.playbackScreenEnum))
-            isInsideMusicListWithoutMenu -> goUpInMusicList(currentState)
-            isInsideSongsWithoutMenu -> goUpInMusicList(currentState) // Show menu for other cases
+            isMenuVisible -> currentState.copy(
+                playbackScreenEnum = getPreviousPlaybackScreen(
+                    currentState.playbackScreenEnum
+                )
+            )
+
+            isInsideMusicListWithoutMenu -> {
+                //Go up the list if there is a list, else show the menu
+                if (currentState.mp3Items.isNotEmpty()) {
+                    goUpInMusicList(currentState)
+                } else {
+                    currentState.copy(isMenuVisible = true)
+                }
+            }
+
+            isInsideSongsWithoutMenu -> {
+                //Go up the list if there is a list, else show the menu
+                if (currentState.mp3Items.isNotEmpty()) {
+                    goUpInMusicList(currentState)
+                } else {
+                    currentState.copy(isMenuVisible = true)
+                }
+            }
+
             else -> currentState.copy(isMenuVisible = true)
         }
     }
@@ -28,7 +51,8 @@ class RewindButtonClickedUseCase @Inject constructor() {
     private fun goUpInMusicList(currentState: PlaybackScreenState): PlaybackScreenState {
         val currentIndex = currentState.mp3Items.indexOfFirst { it.isSelected }
         if (currentIndex != -1) {
-            val previousIndex = if (currentIndex - 1 < 0) currentState.mp3Items.size - 1 else currentIndex - 1
+            val previousIndex =
+                if (currentIndex - 1 < 0) currentState.mp3Items.size - 1 else currentIndex - 1
             val updatedItems = currentState.mp3Items.mapIndexed { index, item ->
                 item.copy(isSelected = index == previousIndex)
             }
