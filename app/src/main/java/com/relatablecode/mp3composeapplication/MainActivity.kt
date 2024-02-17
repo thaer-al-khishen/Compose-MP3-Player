@@ -32,6 +32,7 @@ import com.relatablecode.mp3composeapplication.circular_control_panel.CircularCo
 import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
 import com.relatablecode.mp3composeapplication.event_broadcaster.EventBroadcaster
 import com.relatablecode.mp3composeapplication.event_broadcaster.EventListener
+import com.relatablecode.mp3composeapplication.event_broadcaster.SongBroadcaster
 import com.relatablecode.mp3composeapplication.mp3_player_device.MP3PlayerDevice
 import com.relatablecode.mp3composeapplication.service.MusicPlaybackService
 import com.relatablecode.mp3composeapplication.service.ServiceAction
@@ -313,6 +314,9 @@ class MainActivity : ComponentActivity(), EventListener {
                     TimerManager.stopTimer()
                     TimerManager.setTimerDuration(viewModel.playbackScreenState.value.songBeingPlayed?.duration ?: 0L)
                     TimerManager.startOrResumeTimer() // Consider if you want to reset the timer every time the song changes
+
+                    SongBroadcaster.emitAction(viewModel.playbackScreenState.value.songBeingPlayed?.title ?: "Song")
+
                     val mediaItem = MediaItem.fromUri(it)
                     exoPlayer.setMediaItem(mediaItem)
                     exoPlayer.prepare()

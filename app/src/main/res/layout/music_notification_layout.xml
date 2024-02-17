@@ -3,37 +3,48 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/white"
+    android:gravity="start"
     android:orientation="horizontal"
-    android:gravity="center"
     android:paddingVertical="16dp">
+
+    <TextView
+        android:id="@+id/tv_song_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="3"
+        android:text="Song"
+        android:textColor="@color/black"
+        android:textSize="16sp" />
 
     <ImageView
         android:id="@+id/ic_rewind"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_rewind_menu"
-        android:layout_marginEnd="32dp"/>
+        android:layout_gravity="center"
+        android:layout_marginEnd="16dp"
+        android:src="@drawable/ic_rewind_menu" />
 
     <ImageView
-        android:id="@+id/ic_pause"
+        android:id="@+id/ic_play_pause"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_pause_menu"
-        android:layout_marginEnd="16dp"/>
-
-    <ImageView
-        android:id="@+id/ic_play"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:src="@drawable/ic_play_menu"
-        android:layout_marginStart="16dp"/>
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="16dp"
+        android:src="@drawable/ic_pause_menu" />
 
     <ImageView
         android:id="@+id/ic_forward"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_rewind_menu"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="16dp"
         android:scaleX="-1"
-        android:layout_marginStart="32dp"/>
+        android:src="@drawable/ic_rewind_menu" />
 
 </LinearLayout>
