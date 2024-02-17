@@ -118,130 +118,23 @@ class MP3PlayerViewModel @Inject constructor(
     fun onEvent(event: CircularControlClickEvent) {
         when (event) {
             CircularControlClickEvent.OnMenuClicked -> {
-                val newIsMenuVisible =
-                    useCases.menuButtonClickedUseCase(playbackScreenState.value.isMenuVisible)
-                _playbackScreenState.update { currentState ->
-                    currentState.copy(isMenuVisible = newIsMenuVisible)
-                }
+                handleMenuButtonClicked()
             }
 
             CircularControlClickEvent.OnRewindClicked -> {
-                viewModelScope.launch {
-                    //Check if the user is trying to fast forward a song, or just navigate the menu
-                    val currentState = playbackScreenState.value
-                    val newState = useCases.rewindButtonClickedUseCase(currentState)
-                    if (currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible) {
-                        playNextOrPreviousSong(newState)
-                    } else {
-                        _playbackScreenState.update { newState }
-                    }
-                }
+                handleRewindButtonClicked()
             }
 
             CircularControlClickEvent.OnFastForwardClicked -> {
-                viewModelScope.launch {
-                    //Check if the user is trying to fast forward a song, or just navigate the menu
-                    val currentState = playbackScreenState.value
-                    val newState = useCases.fastForwardButtonClickedUseCase(currentState)
-                    if (currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible) {
-                        playNextOrPreviousSong(newState)
-                    } else {
-                        _playbackScreenState.update { newState }
-                    }
-                }
+                handleFastForwardButtonClicked()
             }
 
             CircularControlClickEvent.OnPlayPauseClicked -> {
-                viewModelScope.launch {
-                    val playPauseMusicResult = useCases.playPauseButtonClickedUseCase(
-                        playbackScreenState.value,
-                        playbackScreenState.value.songBeingPlayed?.uri ?: playbackScreenState.value.mp3Items.firstOrNull()?.uri
-                    )
-                    if (playPauseMusicResult.first) {
-                        playbackScreenState.value.songBeingPlayed?.let {
-                            //Resume
-                            resumeMusic(playPauseMusicResult.second)
-                        } ?: run {
-
-                            //Check if this is the first song being played and triggered with the OnPlayPauseClicked button
-                            //In this case select the first song
-                            playbackScreenState.value.songBeingPlayed ?: run {
-                                playbackScreenState.value.mp3Items[0].isSelected = true
-                            }
-
-                            //Play
-                            playMusic(playPauseMusicResult.second)
-                        }
-                    } else {
-                        pauseMusic()
-                    }
-                }
+                handlePlayPauseButtonClicked()
             }
 
             CircularControlClickEvent.OnMiddleButtonClicked -> {
-                viewModelScope.launch {
-                    val action = useCases.middleButtonClickedUseCase(playbackScreenState.value)
-                    when (action) {
-                        MiddleButtonAction.AccessMedia -> _mp3PlayerEvent.send(MP3PlayerEvent.AccessMediaMultipleFiles)
-                        MiddleButtonAction.HideMenuSelectFirstSong -> {
-                            // Logic to hide the menu and select the first song, if any
-                            if (_playbackScreenState.value.mp3Items.isEmpty()) {
-                                _mp3PlayerEvent.send(MP3PlayerEvent.AccessMediaMultipleFiles)
-                            } else {
-                                //Select first song by default if no song is selected yet
-                                _playbackScreenState.update {
-                                    it.copy(
-                                        isMenuVisible = false,
-                                        mp3Items = it.mp3Items.also { mp3Items ->
-                                            (mp3Items.firstOrNull { it.isSelected })?.let {}
-                                                ?: run {
-                                                    mp3Items[0].isSelected = true
-                                                }
-                                        })
-                                }
-                            }
-                        }
-
-                        MiddleButtonAction.PlaySelectedSong -> {
-                            // Logic to play the selected song or navigate to the song screen
-                            playbackScreenState.value.mp3Items.firstOrNull { it.isSelected }?.let {
-                                _playbackScreenState.update {
-                                    it.copy(
-                                        isMenuVisible = false,
-                                        mp3Items = it.mp3Items.also { mp3Items ->
-                                            (mp3Items.firstOrNull { it.isSelected })?.let {}
-                                                ?: run {
-                                                    mp3Items[0].isSelected = true
-                                                }
-                                        })
-                                }
-                            }
-                            if (!playbackScreenState.value.isPlayingSong) {
-                                playMusic(
-                                    playbackScreenState.value.mp3Items.find { it.isSelected }?.uri
-                                )
-                            } else {
-                                //If there is a song currently playing, pause it and play the selected song
-                                pauseMusic()
-                                playMusic(
-                                    playbackScreenState.value.mp3Items.find { it.isSelected }?.uri
-                                )
-                            }
-                        }
-
-                        MiddleButtonAction.ShowMenu -> _playbackScreenState.update {
-                            it.copy(
-                                isMenuVisible = true
-                            )
-                        }
-
-                        MiddleButtonAction.HideMenu -> _playbackScreenState.update {
-                            it.copy(
-                                isMenuVisible = false
-                            )
-                        }
-                    }
-                }
+                handleMiddleButtonClicked()
             }
 
             CircularControlClickEvent.OnMiddleButtonLongClicked -> {
@@ -262,6 +155,164 @@ class MP3PlayerViewModel @Inject constructor(
 
         }
 
+    }
+
+    private fun handleMiddleButtonClicked() {
+        viewModelScope.launch {
+            val action = useCases.middleButtonClickedUseCase(playbackScreenState.value)
+            when (action) {
+                MiddleButtonAction.AccessMedia -> _mp3PlayerEvent.send(MP3PlayerEvent.AccessMediaMultipleFiles)
+                MiddleButtonAction.HideMenuSelectFirstSong -> {
+                    // Logic to hide the menu and select the first song, if any
+                    if (_playbackScreenState.value.mp3Items.isEmpty()) {
+                        _mp3PlayerEvent.send(MP3PlayerEvent.AccessMediaMultipleFiles)
+                    } else {
+                        //Select first song by default if no song is selected yet
+                        _playbackScreenState.update {
+                            it.copy(
+                                isMenuVisible = false,
+                                mp3Items = it.mp3Items.also { mp3Items ->
+                                    (mp3Items.firstOrNull { it.isSelected })?.let {}
+                                        ?: run {
+                                            mp3Items[0].isSelected = true
+                                        }
+                                })
+                        }
+                    }
+                }
+
+                MiddleButtonAction.PlaySelectedSong -> {
+                    // Logic to play the selected song or navigate to the song screen
+                    playbackScreenState.value.mp3Items.firstOrNull { it.isSelected }?.let {
+                        _playbackScreenState.update {
+                            it.copy(
+                                isMenuVisible = false,
+                                mp3Items = it.mp3Items.also { mp3Items ->
+                                    (mp3Items.firstOrNull { it.isSelected })?.let {}
+                                        ?: run {
+                                            mp3Items[0].isSelected = true
+                                        }
+                                })
+                        }
+                    }
+                    if (!playbackScreenState.value.isPlayingSong) {
+                        playMusic(
+                            playbackScreenState.value.mp3Items.find { it.isSelected }?.uri
+                        )
+                    } else {
+                        //If there is a song currently playing, pause it and play the selected song
+                        pauseMusic()
+                        playMusic(
+                            playbackScreenState.value.mp3Items.find { it.isSelected }?.uri
+                        )
+                    }
+                }
+
+                MiddleButtonAction.ShowMenu -> _playbackScreenState.update {
+                    it.copy(
+                        isMenuVisible = true
+                    )
+                }
+
+                MiddleButtonAction.HideMenu -> _playbackScreenState.update {
+                    it.copy(
+                        isMenuVisible = false
+                    )
+                }
+            }
+        }
+    }
+
+    private fun handlePlayPauseButtonClicked() {
+        viewModelScope.launch {
+            val playPauseMusicResult = useCases.playPauseButtonClickedUseCase(
+                playbackScreenState.value,
+                playbackScreenState.value.songBeingPlayed?.uri
+                    ?: playbackScreenState.value.mp3Items.firstOrNull()?.uri
+            )
+            if (playPauseMusicResult.first) {
+                playbackScreenState.value.songBeingPlayed?.let {
+                    //Resume
+                    resumeMusic(playPauseMusicResult.second)
+                } ?: run {
+
+                    //Check if this is the first song being played and triggered with the OnPlayPauseClicked button
+                    //In this case select the first song
+                    playbackScreenState.value.songBeingPlayed ?: run {
+                        playbackScreenState.value.mp3Items[0].isSelected = true
+                    }
+
+                    //Play
+                    playMusic(playPauseMusicResult.second)
+                }
+            } else {
+                pauseMusic()
+            }
+        }
+    }
+
+    private fun handleFastForwardButtonClicked() {
+        viewModelScope.launch {
+            //Check if the user is trying to fast forward a song, or just navigate the menu
+            val currentState = playbackScreenState.value
+            val newState = useCases.fastForwardButtonClickedUseCase(currentState)
+            if (currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible) {
+                playNextOrPreviousSong(newState)
+            } else {
+                _playbackScreenState.update { newState }
+            }
+        }
+    }
+
+    private fun handleRewindButtonClicked() {
+        viewModelScope.launch {
+            //Check if the user is trying to fast forward a song, or just navigate the menu
+            val currentState = playbackScreenState.value
+            val newState = useCases.rewindButtonClickedUseCase(currentState)
+            if (currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible) {
+                playNextOrPreviousSong(newState)
+            } else {
+                _playbackScreenState.update { newState }
+            }
+        }
+    }
+
+    suspend fun playPreviousSong() {
+        val currentIndex = playbackScreenState.value.mp3Items.indexOfFirst { it.isSelected }
+        val previousIndex = if (currentIndex > 0) currentIndex - 1 else playbackScreenState.value.mp3Items.lastIndex // Wrap to the last song if at the beginning
+        val updatedMp3Items = playbackScreenState.value.mp3Items.mapIndexed { index, mp3Item ->
+            mp3Item.copy(isSelected = index == previousIndex)
+        }
+        val previousSongUri = updatedMp3Items.getOrNull(previousIndex)?.uri ?: return
+
+        pauseMusic()
+        playMusic(previousSongUri)
+        _playbackScreenState.update {
+            it.copy(mp3Items = updatedMp3Items, songBeingPlayed = updatedMp3Items[previousIndex])
+        }
+    }
+
+    suspend fun playNextSong() {
+        val currentIndex = playbackScreenState.value.mp3Items.indexOfFirst { it.isSelected }
+        val nextIndex = if (currentIndex < playbackScreenState.value.mp3Items.lastIndex) currentIndex + 1 else 0 // Wrap to the first song if at the end
+        val updatedMp3Items = playbackScreenState.value.mp3Items.mapIndexed { index, mp3Item ->
+            mp3Item.copy(isSelected = index == nextIndex)
+        }
+        val nextSongUri = updatedMp3Items.getOrNull(nextIndex)?.uri ?: return
+
+        pauseMusic()
+        playMusic(nextSongUri)
+        _playbackScreenState.update {
+            it.copy(mp3Items = updatedMp3Items, songBeingPlayed = updatedMp3Items[nextIndex])
+        }
+    }
+
+    private fun handleMenuButtonClicked() {
+        val newIsMenuVisible =
+            useCases.menuButtonClickedUseCase(playbackScreenState.value.isMenuVisible)
+        _playbackScreenState.update { currentState ->
+            currentState.copy(isMenuVisible = newIsMenuVisible)
+        }
     }
 
     private suspend fun playMusic(uri: Uri?) {

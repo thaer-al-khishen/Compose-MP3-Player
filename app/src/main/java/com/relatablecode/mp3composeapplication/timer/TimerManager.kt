@@ -1,6 +1,5 @@
 package com.relatablecode.mp3composeapplication.timer
 
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,14 +20,14 @@ object TimerManager {
     private var elapsedTime = 0L // Preserve elapsed time when paused
 
     fun setTimerDuration(duration: Long) {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.Main).launch {
             _duration.value = duration
         }
     }
 
     fun startOrResumeTimer() {
         timerJob?.cancel()
-        timerJob = CoroutineScope(Dispatchers.IO).launch {
+        timerJob = CoroutineScope(Dispatchers.Main).launch {
             val startTime = System.currentTimeMillis() - elapsedTime
             while (true) {
                 val currentTime = System.currentTimeMillis()

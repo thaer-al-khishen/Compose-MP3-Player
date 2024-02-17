@@ -28,6 +28,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
+import com.relatablecode.mp3composeapplication.circular_control_panel.CircularControlClickEvent
 import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
 import com.relatablecode.mp3composeapplication.event_broadcaster.EventBroadcaster
 import com.relatablecode.mp3composeapplication.event_broadcaster.EventListener
@@ -334,6 +335,18 @@ class MainActivity : ComponentActivity(), EventListener {
             ServiceAction.STOP_MUSIC -> {
                 TimerManager.stopTimer()
                 stopMusic()
+            }
+
+            ServiceAction.REWIND -> {
+                lifecycleScope.launch {
+                    viewModel.playPreviousSong()
+                }
+            }
+
+            ServiceAction.FAST_FORWARD -> {
+                lifecycleScope.launch {
+                    viewModel.playNextSong()
+                }
             }
 
             else -> {}
