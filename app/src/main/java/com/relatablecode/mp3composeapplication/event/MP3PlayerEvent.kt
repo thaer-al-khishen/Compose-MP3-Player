@@ -10,4 +10,6 @@ sealed class MP3PlayerEvent {
     object PauseSong: MP3PlayerEvent()
     object StopSong: MP3PlayerEvent()
     object ShowDeleteSongUI: MP3PlayerEvent()
+    object SwitchToNextTheme: MP3PlayerEvent()
+    object SwitchToPreviousTheme: MP3PlayerEvent()
 }

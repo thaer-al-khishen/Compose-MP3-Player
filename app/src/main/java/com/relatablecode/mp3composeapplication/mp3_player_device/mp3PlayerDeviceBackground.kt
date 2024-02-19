@@ -7,9 +7,9 @@ import com.relatablecode.mp3composeapplication.Theme
 @Composable
 fun mp3PlayerDeviceBackground(): Brush {
     val colors = listOf(
-        Theme.LightGray,
-        Theme.DarkGray,
-        Theme.LightGray
+        Theme.PrimaryColor,
+        Theme.SecondaryColor,
+        Theme.PrimaryColor
     )
     return Brush.horizontalGradient(colors = colors)
 }

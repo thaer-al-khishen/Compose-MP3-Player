@@ -15,6 +15,8 @@ class FastForwardButtonClickedUseCase @Inject constructor() {
             !currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST
         val isInsideSongsWithoutMenu =
             !currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.SONG
+        val isInsideSettingsWithoutMenu =
+            !currentState.isMenuVisible && currentState.playbackScreenEnum == PlaybackScreenEnum.SETTINGS
 
         return when {
             isMenuVisible -> currentState.copy(
@@ -40,6 +42,11 @@ class FastForwardButtonClickedUseCase @Inject constructor() {
                     currentState.copy(isMenuVisible = true)
                 }
             }
+
+            isInsideSettingsWithoutMenu -> {
+                currentState.copy()
+            }
+
             else -> currentState.copy(isMenuVisible = true)
         }
     }

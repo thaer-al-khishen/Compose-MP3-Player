@@ -280,10 +280,14 @@ class MP3PlayerViewModel @Inject constructor(
             //Check if the user is trying to fast forward a song, or just navigate the menu
             val currentState = playbackScreenState.value
             val newState = useCases.fastForwardButtonClickedUseCase(currentState)
-            if (currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible) {
-                playNextOrPreviousSong(newState)
-            } else {
-                _playbackScreenState.update { newState }
+            when {
+                currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible -> playNextOrPreviousSong(newState)
+                currentState.playbackScreenEnum == PlaybackScreenEnum.SETTINGS && !currentState.isMenuVisible -> {
+                    _mp3PlayerEvent.send(MP3PlayerEvent.SwitchToNextTheme)
+                }
+                else -> {
+                    _playbackScreenState.update { newState }
+                }
             }
         }
     }
@@ -293,10 +297,14 @@ class MP3PlayerViewModel @Inject constructor(
             //Check if the user is trying to fast forward a song, or just navigate the menu
             val currentState = playbackScreenState.value
             val newState = useCases.rewindButtonClickedUseCase(currentState)
-            if (currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible) {
-                playNextOrPreviousSong(newState)
-            } else {
-                _playbackScreenState.update { newState }
+            when {
+                currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible -> playNextOrPreviousSong(newState)
+                currentState.playbackScreenEnum == PlaybackScreenEnum.SETTINGS && !currentState.isMenuVisible -> {
+                    _mp3PlayerEvent.send(MP3PlayerEvent.SwitchToNextTheme)
+                }
+                else -> {
+                    _playbackScreenState.update { newState }
+                }
             }
         }
     }

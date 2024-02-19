@@ -10,11 +10,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
@@ -25,10 +25,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
-import com.relatablecode.mp3composeapplication.circular_control_panel.CircularControlClickEvent
 import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
 import com.relatablecode.mp3composeapplication.event_broadcaster.EventBroadcaster
 import com.relatablecode.mp3composeapplication.event_broadcaster.EventListener
@@ -36,6 +33,8 @@ import com.relatablecode.mp3composeapplication.event_broadcaster.SongBroadcaster
 import com.relatablecode.mp3composeapplication.mp3_player_device.MP3PlayerDevice
 import com.relatablecode.mp3composeapplication.service.MusicPlaybackService
 import com.relatablecode.mp3composeapplication.service.ServiceAction
+import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
+import com.relatablecode.mp3composeapplication.theme.ThemesViewModel
 import com.relatablecode.mp3composeapplication.timer.TimerManager
 import com.relatablecode.mp3composeapplication.utils.UriUtils
 import dagger.hilt.android.AndroidEntryPoint
@@ -88,6 +87,7 @@ class MainActivity : ComponentActivity(), EventListener {
         }
 
     private val viewModel: MP3PlayerViewModel by viewModels()
+    private val themesViewModel: ThemesViewModel by viewModels()
 
     private lateinit var exoPlayer: ExoPlayer
 
@@ -105,15 +105,21 @@ class MainActivity : ComponentActivity(), EventListener {
         observeExoPlayerStateChanges()
 
         setContent {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                val playbackScreenState = viewModel.playbackScreenState.collectAsState()
-                MP3PlayerDevice(
-                    exoPlayer = exoPlayer, playbackScreenState.value, viewModel::onEvent
-                )
+
+            val currentTheme = themesViewModel.currentTheme.collectAsState().value
+
+            CompositionLocalProvider(LocalAppTheme provides currentTheme) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val playbackScreenState = viewModel.playbackScreenState.collectAsState()
+                    MP3PlayerDevice(
+                        exoPlayer = exoPlayer, playbackScreenState.value, viewModel::onEvent
+                    )
+                }
             }
+
         }
     }
 
@@ -177,6 +183,15 @@ class MainActivity : ComponentActivity(), EventListener {
                                     show()
                                 }
                             }
+
+                            is MP3PlayerEvent.SwitchToNextTheme -> {
+                                switchToNextTheme()
+                            }
+
+                            is MP3PlayerEvent.SwitchToPreviousTheme -> {
+                                switchToPreviousTheme()
+                            }
+
                         }
                     }
                 }
@@ -316,6 +331,14 @@ class MainActivity : ComponentActivity(), EventListener {
             }
         }
         exoPlayer.addListener(listener)
+    }
+
+    private fun switchToNextTheme() {
+        themesViewModel.switchToNextTheme()
+    }
+
+    private fun switchToPreviousTheme() {
+        themesViewModel.switchToPreviousTheme()
     }
 
     override fun onEventReceived(action: ServiceAction?) {
