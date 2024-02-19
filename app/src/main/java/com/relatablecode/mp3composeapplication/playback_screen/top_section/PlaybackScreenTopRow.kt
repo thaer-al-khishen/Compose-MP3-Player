@@ -25,6 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.relatablecode.mp3composeapplication.R
 import com.relatablecode.mp3composeapplication.Theme
+import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -57,7 +58,7 @@ private fun CurrentTime(modifier: Modifier = Modifier) {
         }
     }
 
-    Text(text = currentTime.value, color = Theme.PlaybackScreenContentColor, modifier = modifier)
+    Text(text = currentTime.value, color = LocalAppTheme.current.playbackScreenContentColor, modifier = modifier)
 }
 
 private fun getFormattedTime(): String {
@@ -104,7 +105,7 @@ private fun BatteryIcon(batteryLevel: Int, modifier: Modifier = Modifier) {
 
     Icon(
         painter = painterResource(id = batteryIconId),
-        tint = Theme.PlaybackScreenContentColor,
+        tint = LocalAppTheme.current.playbackScreenContentColor,
         contentDescription = "Battery Level",
         modifier = modifier
             .size(24.dp) // Adjust the size as needed

@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.ExoPlayer
 import com.relatablecode.mp3composeapplication.Theme
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
+import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 
 @Composable
 fun PlaybackScreen(modifier: Modifier = Modifier, playbackScreenState: PlaybackScreenState, exoPlayer: ExoPlayer) {
@@ -19,14 +20,14 @@ fun PlaybackScreen(modifier: Modifier = Modifier, playbackScreenState: PlaybackS
         modifier = modifier
             .then(
                 Modifier
-                    .border(BorderStroke(1.dp, Theme.PlaybackScreenBorderColor), RoundedCornerShape(12.dp)) // Set border color and width here
+                    .border(BorderStroke(1.dp, LocalAppTheme.current.playbackScreenBorderColor), RoundedCornerShape(12.dp)) // Set border color and width here
             )
     ) {
         // Inner Box for background and content
         Box(
             modifier = Modifier
                 .matchParentSize() // Match the size of the outer Box
-                .background(Theme.PlaybackScreenColor, RoundedCornerShape(12.dp))
+                .background(LocalAppTheme.current.playbackScreenColor, RoundedCornerShape(12.dp))
         ) {
             BlackScreenContent(playbackScreenState = playbackScreenState, exoPlayer = exoPlayer)
         }

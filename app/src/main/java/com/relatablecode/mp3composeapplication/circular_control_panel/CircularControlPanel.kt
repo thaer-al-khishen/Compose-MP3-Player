@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.relatablecode.mp3composeapplication.R
 import com.relatablecode.mp3composeapplication.Theme
+import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -40,12 +41,14 @@ fun CircularControlPanel(modifier: Modifier = Modifier, onEvent: (CircularContro
     val outerCircleSize = 250.dp
     val innerCircleSize = 120.dp
 
+    val localTheme = LocalAppTheme.current
+
     Box(contentAlignment = Alignment.Center, modifier = modifier.then(Modifier.size(outerCircleSize))) {
         // Outer Circle (Arc)
         Canvas(modifier = Modifier.matchParentSize()) {
             // Background circle
             drawArc(
-                color = Theme.PlaybackOuterCircleBorderColor,
+                color = localTheme.playbackOuterCircleBorderColor,
                 startAngle = 0f,
                 sweepAngle = 360f,
                 useCenter = false,
@@ -53,7 +56,7 @@ fun CircularControlPanel(modifier: Modifier = Modifier, onEvent: (CircularContro
                 size = size
             )
             drawCircle(
-                color = Theme.PlaybackOuterCircleColor,
+                color = localTheme.playbackOuterCircleColor,
                 radius = size.minDimension / 2
             )
         }
@@ -82,7 +85,7 @@ fun CircularControlPanel(modifier: Modifier = Modifier, onEvent: (CircularContro
             modifier = Modifier
                 .size(innerCircleSize)
                 .clip(CircleShape)
-                .background(Theme.PlaybackInnerCircleColor)
+                .background(localTheme.playbackInnerCircleColor)
 //                .clickable { onEvent.invoke(CircularControlClickEvent.OnMiddleButtonClicked) }
 //                .pointerInput(Unit) {
 //                    detectTapGestures(
@@ -119,9 +122,9 @@ private fun ControlItem(modifier: Modifier = Modifier, text: String? = null, ico
     ) {
 
         if (text != null) {
-            Text(text = text, color = Theme.PlaybackTextColor, modifier = modifier.then(Modifier.padding(20.dp)), fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            Text(text = text, color = LocalAppTheme.current.playbackTextColor, modifier = modifier.then(Modifier.padding(20.dp)), fontWeight = FontWeight.Bold, fontSize = 20.sp)
         } else if (icon != null) {
-            Icon(icon, contentDescription = null, tint = Theme.PlaybackButtonColor, modifier = modifier.then(Modifier.padding(15.dp)))
+            Icon(icon, contentDescription = null, tint = LocalAppTheme.current.playbackButtonColor, modifier = modifier.then(Modifier.padding(15.dp)))
         }
     }
 }

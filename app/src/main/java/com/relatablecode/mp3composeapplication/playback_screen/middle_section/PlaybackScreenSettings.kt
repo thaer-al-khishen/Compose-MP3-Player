@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.relatablecode.mp3composeapplication.R
 import com.relatablecode.mp3composeapplication.Theme
+import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 
 @Composable
 @Preview
@@ -40,30 +41,30 @@ fun PlaybackScreenSettings(modifier: Modifier = Modifier) {
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.arrow_left),
-                tint = Theme.PlaybackScreenMiddleImageColor,
+                tint = LocalAppTheme.current.playbackScreenMiddleImageColor,
                 contentDescription = "Arrow Left",
             )
             Spacer(modifier = Modifier.width(16.dp))
             Card(
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    contentColor = Theme.PrimaryColor,
-                    containerColor = Theme.PrimaryColor
+                    contentColor = LocalAppTheme.current.primaryColor,
+                    containerColor = LocalAppTheme.current.primaryColor
                 ),
                 modifier = Modifier.size(80.dp)
             ) {}
             Spacer(modifier = Modifier.width(16.dp))
             Icon(
                 painter = painterResource(id = R.drawable.arrow_left),
-                tint = Theme.PlaybackScreenMiddleImageColor,
+                tint = LocalAppTheme.current.playbackScreenMiddleImageColor,
                 contentDescription = "Arrow Left",
                 modifier = Modifier.rotate(180f)
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = Theme.ThemeColorName,
-            color = Theme.PlaybackScreenMiddleImageColor,
+            text = LocalAppTheme.current.themeColorName,
+            color = LocalAppTheme.current.playbackScreenContentColor,
             fontSize = 20.sp
         )
     }

@@ -12,6 +12,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import com.relatablecode.mp3composeapplication.R
 import com.relatablecode.mp3composeapplication.Theme
+import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 
 @Composable
 fun PlaybackScreenHome(modifier: Modifier = Modifier) {
@@ -24,9 +25,9 @@ fun PlaybackScreenHome(modifier: Modifier = Modifier) {
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_music_folder),
-            tint = Theme.PlaybackScreenMiddleImageColor,
+            tint = LocalAppTheme.current.playbackScreenMiddleImageColor,
             contentDescription = "Music Folder",
         )
-        Text(text = "Music Player", color = Theme.PlaybackScreenContentColor, fontSize = 16.sp)
+        Text(text = "Music Player", color = LocalAppTheme.current.playbackScreenContentColor, fontSize = 16.sp)
     }
 }

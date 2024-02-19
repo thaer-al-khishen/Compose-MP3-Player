@@ -24,6 +24,7 @@ import com.relatablecode.mp3composeapplication.Mp3Item
 import com.relatablecode.mp3composeapplication.R
 import com.relatablecode.mp3composeapplication.Theme
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
+import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 import com.relatablecode.mp3composeapplication.timer.TimerManager
 
 @Composable
@@ -53,15 +54,22 @@ fun SongDetailsUI(
     duration: Long
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().padding(16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(painter = painterResource(id = R.drawable.ic_music_note_single), contentDescription = "Song", modifier = Modifier.size(50.dp))
+        Icon(
+            painter = painterResource(id = R.drawable.ic_music_note_single),
+            contentDescription = "Song",
+            modifier = Modifier.size(50.dp),
+            tint = LocalAppTheme.current.playbackScreenMiddleImageColor
+        )
         Spacer(modifier = Modifier.height(8.dp))
 
         song?.let {
-            Text(text = it.title, fontSize = 16.sp)
+            Text(text = it.title, fontSize = 16.sp, color = LocalAppTheme.current.playbackScreenContentColor)
             Spacer(modifier = Modifier.height(8.dp))
             Slider(
                 value = currentPosition.coerceAtLeast(0L).toFloat(),
@@ -71,7 +79,7 @@ fun SongDetailsUI(
                 modifier = Modifier.fillMaxWidth()
             )
             TimeDisplay(currentPosition = currentPosition, duration = duration)
-        } ?: Text("No song playing yet")
+        } ?: Text("No song playing yet", color = LocalAppTheme.current.playbackScreenContentColor)
     }
 }
 
@@ -81,8 +89,14 @@ fun TimeDisplay(currentPosition: Long, duration: Long) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = formatSeconds(currentPosition.div(1000).toFloat()), color = Theme.PlaybackScreenContentColor)
-        Text(text = formatSeconds(duration.div(1000).toFloat()), color = Theme.PlaybackScreenContentColor)
+        Text(
+            text = formatSeconds(currentPosition.div(1000).toFloat()),
+            color = LocalAppTheme.current.playbackScreenContentColor
+        )
+        Text(
+            text = formatSeconds(duration.div(1000).toFloat()),
+            color = LocalAppTheme.current.playbackScreenContentColor
+        )
     }
 }
 

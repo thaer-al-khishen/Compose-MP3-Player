@@ -33,6 +33,7 @@ import com.relatablecode.mp3composeapplication.R
 import com.relatablecode.mp3composeapplication.Theme
 import com.relatablecode.mp3composeapplication.conditional
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
+import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 
 @Composable
 fun PlaybackScreenMusicList(
@@ -49,14 +50,14 @@ fun PlaybackScreenMusicList(
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_music_note_white),
-                tint = Theme.PlaybackScreenMiddleImageColor,
+                tint = LocalAppTheme.current.playbackScreenMiddleImageColor,
                 contentDescription = "Songs list",
                 modifier = Modifier.size(100.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "No songs yet\nImport new songs",
-                color = Theme.PlaybackScreenContentColor,
+                color = LocalAppTheme.current.playbackScreenContentColor,
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center
             )
@@ -102,7 +103,7 @@ private fun MP3MusicItem(mp3Item: Mp3Item = Mp3Item(Uri.parse(""), "Music Title"
             .conditional(
                 mp3Item.isSelected, ifTrue = {
                     background(
-                        colorResource(id = R.color.gray_nimbus_cloud),
+                        LocalAppTheme.current.selectedSongColor,
                         RoundedCornerShape(8.dp)
                     )
                 }
@@ -110,7 +111,7 @@ private fun MP3MusicItem(mp3Item: Mp3Item = Mp3Item(Uri.parse(""), "Music Title"
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_music_note_white),
-            tint = Theme.PlaybackScreenMiddleImageColor,
+            tint = LocalAppTheme.current.playbackScreenMiddleImageColor,
             contentDescription = "Song",
             modifier = Modifier
                 .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
@@ -119,7 +120,7 @@ private fun MP3MusicItem(mp3Item: Mp3Item = Mp3Item(Uri.parse(""), "Music Title"
         Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = mp3Item.title,
-            color = Theme.PlaybackScreenContentColor,
+            color = LocalAppTheme.current.playbackScreenContentColor,
             fontSize = 16.sp,
             modifier = Modifier.padding(end = 8.dp, top = 8.dp, bottom = 8.dp)
         )
