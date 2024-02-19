@@ -87,16 +87,27 @@ class MP3PlayerViewModel @Inject constructor(
 
                 // Delete the selected song URI from the repository
                 val uriToDelete = currentSongs[selectedSongIndex].uri
+
+                //Make sure to handle the current played song being deleted
+                if (playbackScreenState.value.songBeingPlayed == currentSongs[selectedSongIndex]) {
+                    _mp3PlayerEvent.send(MP3PlayerEvent.StopSong)
+                    _playbackScreenState.update {
+                        it.copy(isPlayingSong = false, songBeingPlayed = null)
+                    }
+                }
+
                 useCases.deleteUriUseCase(uriToDelete)
 
                 // Wait for the deletion to reflect in the observed URIs list
                 delay(100) // This delay is hypothetical and depends on how quickly your app can process URI deletions
 
                 // Update the list of songs without the deleted one and apply the new selection
-                val updatedSongsWithoutDeleted = currentState.mp3Items.filter { it.uri != uriToDelete }
-                val updatedSongsWithNewSelection = updatedSongsWithoutDeleted.mapIndexed { index, item ->
-                    item.copy(isSelected = index == newSelectedIndex)
-                }
+                val updatedSongsWithoutDeleted =
+                    currentState.mp3Items.filter { it.uri != uriToDelete }
+                val updatedSongsWithNewSelection =
+                    updatedSongsWithoutDeleted.mapIndexed { index, item ->
+                        item.copy(isSelected = index == newSelectedIndex)
+                    }
 
                 // Update state with the new song list and selection
                 _playbackScreenState.update { it.copy(mp3Items = updatedSongsWithNewSelection) }
@@ -227,8 +238,15 @@ class MP3PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             val playPauseMusicResult = useCases.playPauseButtonClickedUseCase(
                 playbackScreenState.value,
-                playbackScreenState.value.songBeingPlayed?.uri
-                    ?: playbackScreenState.value.mp3Items.firstOrNull()?.uri
+                playbackScreenState.value.songBeingPlayed?.uri?.let {
+                    it
+                } ?: run {
+                    playbackScreenState.value.mp3Items.firstOrNull { it.isSelected }?.let {
+                        it.uri
+                    } ?: run {
+                        playbackScreenState.value.mp3Items.firstOrNull()?.uri
+                    }
+                }
             )
             if (playPauseMusicResult.first) {
                 playbackScreenState.value.songBeingPlayed?.let {
@@ -238,12 +256,18 @@ class MP3PlayerViewModel @Inject constructor(
 
                     //Check if this is the first song being played and triggered with the OnPlayPauseClicked button
                     //In this case select the first song
-                    playbackScreenState.value.songBeingPlayed ?: run {
-                        playbackScreenState.value.mp3Items[0].isSelected = true
-                    }
+
+                    val nextMp3Item =
+                        playbackScreenState.value.mp3Items.firstOrNull { it.isSelected }?.let {
+                            it
+                        } ?: run {
+                            playbackScreenState.value.mp3Items[0].isSelected = true
+                            playbackScreenState.value.mp3Items[0]
+                        }
+
 
                     //Play
-                    playMusic(playPauseMusicResult.second)
+                    playMusic(nextMp3Item.uri)
                 }
             } else {
                 pauseMusic()
@@ -279,7 +303,8 @@ class MP3PlayerViewModel @Inject constructor(
 
     suspend fun playPreviousSong() {
         val currentIndex = playbackScreenState.value.mp3Items.indexOfFirst { it.isSelected }
-        val previousIndex = if (currentIndex > 0) currentIndex - 1 else playbackScreenState.value.mp3Items.lastIndex // Wrap to the last song if at the beginning
+        val previousIndex =
+            if (currentIndex > 0) currentIndex - 1 else playbackScreenState.value.mp3Items.lastIndex // Wrap to the last song if at the beginning
         val updatedMp3Items = playbackScreenState.value.mp3Items.mapIndexed { index, mp3Item ->
             mp3Item.copy(isSelected = index == previousIndex)
         }
@@ -294,7 +319,8 @@ class MP3PlayerViewModel @Inject constructor(
 
     suspend fun playNextSong() {
         val currentIndex = playbackScreenState.value.mp3Items.indexOfFirst { it.isSelected }
-        val nextIndex = if (currentIndex < playbackScreenState.value.mp3Items.lastIndex) currentIndex + 1 else 0 // Wrap to the first song if at the end
+        val nextIndex =
+            if (currentIndex < playbackScreenState.value.mp3Items.lastIndex) currentIndex + 1 else 0 // Wrap to the first song if at the end
         val updatedMp3Items = playbackScreenState.value.mp3Items.mapIndexed { index, mp3Item ->
             mp3Item.copy(isSelected = index == nextIndex)
         }

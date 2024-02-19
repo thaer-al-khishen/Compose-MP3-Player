@@ -159,6 +159,10 @@ class MainActivity : ComponentActivity(), EventListener {
                                 pauseMusic()
                             }
 
+                            is MP3PlayerEvent.StopSong -> {
+                                stopMusic()
+                            }
+
                             is MP3PlayerEvent.ShowDeleteSongUI -> {
                                 AlertDialog.Builder(this@MainActivity).apply {
                                     setTitle("Delete Song")
@@ -232,6 +236,13 @@ class MainActivity : ComponentActivity(), EventListener {
     }
 
     private fun stopMusic() {
+        val serviceIntent = Intent(this, MusicPlaybackService::class.java).apply {
+            action = ServiceAction.STOP_MUSIC.toString()
+        }
+        startService(serviceIntent)
+    }
+
+    private fun stopAndReleaseMusic() {
         exoPlayer.stop()
         exoPlayer.clearMediaItems()
         exoPlayer.release()
@@ -338,7 +349,8 @@ class MainActivity : ComponentActivity(), EventListener {
 
             ServiceAction.STOP_MUSIC -> {
                 TimerManager.stopTimer()
-                stopMusic()
+                exoPlayer.stop()
+                exoPlayer.clearMediaItems()
             }
 
             ServiceAction.REWIND -> {
