@@ -26,17 +26,22 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
-import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
-import com.relatablecode.mp3composeapplication.event_broadcaster.PlaybackEventBroadcaster
-import com.relatablecode.mp3composeapplication.event_broadcaster.EventListener
-import com.relatablecode.mp3composeapplication.event_broadcaster.SongBroadcaster
+import com.relatablecode.mp3composeapplication.event.MP3PlayerSongEvent
+import com.relatablecode.mp3composeapplication.event.MP3PlayerFileEvent
+import com.relatablecode.mp3composeapplication.event.MP3PlayerThemeEvent
+import com.relatablecode.mp3composeapplication.event.MP3PlayerUIEvent
+import com.relatablecode.mp3composeapplication.event.UriEvent
+import com.relatablecode.mp3composeapplication.event_broadcaster.playback.PlaybackEventBroadcaster
+import com.relatablecode.mp3composeapplication.event_broadcaster.playback.PlaybackEventListener
+import com.relatablecode.mp3composeapplication.event_broadcaster.song.SongBroadcaster
 import com.relatablecode.mp3composeapplication.mp3_player_device.MP3PlayerDevice
 import com.relatablecode.mp3composeapplication.service.MusicPlaybackService
 import com.relatablecode.mp3composeapplication.service.ServiceAction
 import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 import com.relatablecode.mp3composeapplication.theme.ThemesViewModel
 import com.relatablecode.mp3composeapplication.timer.TimerManager
-import com.relatablecode.mp3composeapplication.utils.UriUtils
+import com.relatablecode.mp3composeapplication.uri.UriUtils
+import com.relatablecode.mp3composeapplication.uri.UriViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
@@ -44,7 +49,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity(), EventListener {
+class MainActivity : ComponentActivity(), PlaybackEventListener {
 
     // For a single audio file selection
     // Register the contract for picking a single document, allowing persistable permission.
@@ -87,6 +92,7 @@ class MainActivity : ComponentActivity(), EventListener {
         }
 
     private val viewModel: MP3PlayerViewModel by viewModels()
+    private val uriViewModel: UriViewModel by viewModels()
     private val themesViewModel: ThemesViewModel by viewModels()
 
     private lateinit var exoPlayer: ExoPlayer
@@ -115,7 +121,7 @@ class MainActivity : ComponentActivity(), EventListener {
                 ) {
                     val playbackScreenState = viewModel.playbackScreenState.collectAsState()
                     MP3PlayerDevice(
-                        playbackScreenState.value, viewModel::onEvent
+                        playbackScreenState.value, viewModel::onCircularControlClickedEvent
                     )
                 }
             }
@@ -145,31 +151,24 @@ class MainActivity : ComponentActivity(), EventListener {
                 withContext(Dispatchers.Main.immediate) {
                     viewModel.mp3PlayerEvent.collect {
                         when (it) {
-                            is MP3PlayerEvent.AccessMediaSingleFile -> {
-                                showSingleFilePicker()
-                            }
 
-                            is MP3PlayerEvent.AccessMediaMultipleFiles -> {
-                                showMultipleFilePicker()
-                            }
-
-                            is MP3PlayerEvent.PlaySong -> {
+                            is MP3PlayerSongEvent.PlaySong -> {
                                 playMusic(it.uri)
                             }
 
-                            is MP3PlayerEvent.ResumeSong -> {
+                            is MP3PlayerSongEvent.ResumeSong -> {
                                 resumeMusic()
                             }
 
-                            is MP3PlayerEvent.PauseSong -> {
+                            is MP3PlayerSongEvent.PauseSong -> {
                                 pauseMusic()
                             }
 
-                            is MP3PlayerEvent.StopSong -> {
+                            is MP3PlayerSongEvent.StopSong -> {
                                 stopMusic()
                             }
 
-                            is MP3PlayerEvent.ShowDeleteSongUI -> {
+                            is MP3PlayerSongEvent.ShowDeleteSongUI -> {
                                 AlertDialog.Builder(this@MainActivity).apply {
                                     setTitle("Delete Song")
                                     setMessage("Are you sure you want to delete this song?")
@@ -182,14 +181,6 @@ class MainActivity : ComponentActivity(), EventListener {
                                     }
                                     show()
                                 }
-                            }
-
-                            is MP3PlayerEvent.SwitchToNextTheme -> {
-                                switchToNextTheme()
-                            }
-
-                            is MP3PlayerEvent.SwitchToPreviousTheme -> {
-                                switchToPreviousTheme()
                             }
 
                         }
@@ -213,7 +204,35 @@ class MainActivity : ComponentActivity(), EventListener {
                     }
 
                     // Update your PlaybackScreenState with the new list of Mp3Items
-                    viewModel.updateMp3Items(mp3Items)
+                    viewModel.onPlaybackScreenEvent(MP3PlayerUIEvent.UpdateMp3Items(mp3Items))
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.mp3PlayerFileEvent.collect { event ->
+                    when(event) {
+                        is MP3PlayerFileEvent.AccessMediaMultipleFiles -> {
+                            showMultipleFilePicker()
+                        }
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.mp3PlayerThemeEvent.collect { event ->
+                    when(event) {
+                        is MP3PlayerThemeEvent.SwitchToPreviousTheme -> {
+                            switchToPreviousTheme()
+                        }
+
+                        is MP3PlayerThemeEvent.SwitchToNextTheme -> {
+                            switchToNextTheme()
+                        }
+                    }
                 }
             }
         }
@@ -299,28 +318,25 @@ class MainActivity : ComponentActivity(), EventListener {
     }
 
     private fun saveUri(uri: Uri) {
-        viewModel.saveUri(uri)
+//        viewModel.saveUri(uri)
+        uriViewModel.onEvent(UriEvent.SaveUriEvent(uri))
     }
 
     //Created to save multiple uris when the user wants to import several mp3 files at once
     private fun saveUris(uris: List<Uri>) {
-        viewModel.saveUris(uris)
+        uriViewModel.onEvent(UriEvent.SaveUrisEvent(uris))
     }
 
     private fun retrieveUris(): StateFlow<Set<Uri>> {
-        return viewModel.uris
-    }
-
-    private fun deleteUri(uri: Uri) {
-        viewModel.deleteUri(uri)
+        return uriViewModel.uris
     }
 
     private fun deleteSong() {
-        viewModel.deleteSong()
+        viewModel.onPlaybackScreenEvent(MP3PlayerUIEvent.DeleteSong)
     }
 
     private fun navigateToMusicList() {
-        viewModel.navigateToMusicList()
+        viewModel.onPlaybackScreenEvent(MP3PlayerUIEvent.NavigateToMusicList)
     }
 
     private fun observeExoPlayerStateChanges() {

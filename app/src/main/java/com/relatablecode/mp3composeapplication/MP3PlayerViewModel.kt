@@ -4,7 +4,10 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.relatablecode.mp3composeapplication.circular_control_panel.CircularControlClickEvent
-import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
+import com.relatablecode.mp3composeapplication.event.MP3PlayerSongEvent
+import com.relatablecode.mp3composeapplication.event.MP3PlayerFileEvent
+import com.relatablecode.mp3composeapplication.event.MP3PlayerThemeEvent
+import com.relatablecode.mp3composeapplication.event.MP3PlayerUIEvent
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenEnum
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
 import com.relatablecode.mp3composeapplication.use_cases.MP3PlayerUseCases
@@ -15,7 +18,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -34,44 +36,24 @@ class MP3PlayerViewModel @Inject constructor(
     )
     val playbackScreenState: StateFlow<PlaybackScreenState> = _playbackScreenState
 
-    private val _mp3PlayerEvent = Channel<MP3PlayerEvent>(Channel.BUFFERED)
-    val mp3PlayerEvent = _mp3PlayerEvent.receiveAsFlow()
+    private val _mp3PlayerSongEvent = Channel<MP3PlayerSongEvent>(Channel.BUFFERED)
+    val mp3PlayerEvent = _mp3PlayerSongEvent.receiveAsFlow()
 
-    private val _uris = MutableStateFlow<Set<Uri>>(emptySet())
-    val uris: StateFlow<Set<Uri>> = _uris.asStateFlow()
+    private val _mp3PlayerFileEvent = Channel<MP3PlayerFileEvent>(Channel.BUFFERED)
+    val mp3PlayerFileEvent = _mp3PlayerFileEvent.receiveAsFlow()
 
-    init {
-        collectUris()
-    }
+    private val _mp3PlayerThemeEvent = Channel<MP3PlayerThemeEvent>(Channel.BUFFERED)
+    val mp3PlayerThemeEvent = _mp3PlayerThemeEvent.receiveAsFlow()
 
-    private fun collectUris() {
-        viewModelScope.launch {
-            useCases.getUrisUseCase().collect { uriStrings ->
-                _uris.value = uriStrings.map { Uri.parse(it) }.toSet()
-            }
+    fun onPlaybackScreenEvent(event: MP3PlayerUIEvent) {
+        when (event) {
+            is MP3PlayerUIEvent.DeleteSong -> deleteSong()
+            is MP3PlayerUIEvent.UpdateMp3Items -> updateMp3Items(event.mp3Items)
+            is MP3PlayerUIEvent.NavigateToMusicList -> navigateToMusicList()
         }
     }
 
-    fun saveUri(uri: Uri) {
-        viewModelScope.launch {
-            useCases.saveUriUseCase(uri)
-        }
-    }
-
-    //Created to save multiple uris when the user wants to import several mp3 files at once
-    fun saveUris(uris: List<Uri>) {
-        viewModelScope.launch {
-            useCases.saveUrisUseCase(uris)
-        }
-    }
-
-    fun deleteUri(uri: Uri) {
-        viewModelScope.launch {
-            useCases.deleteUriUseCase(uri)
-        }
-    }
-
-    fun deleteSong() {
+    private fun deleteSong() {
         viewModelScope.launch {
             val currentState = playbackScreenState.value
             val currentSongs = currentState.mp3Items
@@ -90,7 +72,7 @@ class MP3PlayerViewModel @Inject constructor(
 
                 //Make sure to handle the current played song being deleted
                 if (playbackScreenState.value.songBeingPlayed == currentSongs[selectedSongIndex]) {
-                    _mp3PlayerEvent.send(MP3PlayerEvent.StopSong)
+                    _mp3PlayerSongEvent.send(MP3PlayerSongEvent.StopSong)
                     _playbackScreenState.update {
                         it.copy(isPlayingSong = false, songBeingPlayed = null)
                     }
@@ -115,19 +97,19 @@ class MP3PlayerViewModel @Inject constructor(
         }
     }
 
-    fun updateMp3Items(mp3Items: List<Mp3Item>) {
+    private fun updateMp3Items(mp3Items: List<Mp3Item>) {
         val newState =
             useCases.updateMp3ItemsUseCase(state = playbackScreenState.value, mp3Items = mp3Items)
         _playbackScreenState.update { newState }
     }
 
-    fun navigateToMusicList() {
+    private fun navigateToMusicList() {
         val newState = useCases.navigateToMusicListUseCase(state = playbackScreenState.value)
         _playbackScreenState.update { newState }
     }
 
-    fun onEvent(event: CircularControlClickEvent) {
-        when (event) {
+    fun onCircularControlClickedEvent(circularControlClickEvent: CircularControlClickEvent) {
+        when (circularControlClickEvent) {
             CircularControlClickEvent.OnMenuClicked -> {
                 handleMenuButtonClicked()
             }
@@ -149,34 +131,23 @@ class MP3PlayerViewModel @Inject constructor(
             }
 
             CircularControlClickEvent.OnMiddleButtonLongClicked -> {
-                val action =
-                    useCases.middleButtonLongClickedUseCase(currentState = playbackScreenState.value)
-                when (action) {
-                    MiddleButtonLongClickedAction.DELETE_SONG -> {
-                        viewModelScope.launch {
-                            _mp3PlayerEvent.send(MP3PlayerEvent.ShowDeleteSongUI)
-                        }
-                    }
-
-                    else -> {}
-                }
+                handleMiddleButtonLongClicked()
             }
 
             CircularControlClickEvent.Default -> {}
 
         }
-
     }
 
     private fun handleMiddleButtonClicked() {
         viewModelScope.launch {
             val action = useCases.middleButtonClickedUseCase(playbackScreenState.value)
             when (action) {
-                MiddleButtonAction.AccessMedia -> _mp3PlayerEvent.send(MP3PlayerEvent.AccessMediaMultipleFiles)
+                MiddleButtonAction.AccessMedia -> _mp3PlayerFileEvent.send(MP3PlayerFileEvent.AccessMediaMultipleFiles)
                 MiddleButtonAction.HideMenuSelectFirstSong -> {
                     // Logic to hide the menu and select the first song, if any
                     if (_playbackScreenState.value.mp3Items.isEmpty()) {
-                        _mp3PlayerEvent.send(MP3PlayerEvent.AccessMediaMultipleFiles)
+                        _mp3PlayerFileEvent.send(MP3PlayerFileEvent.AccessMediaMultipleFiles)
                     } else {
                         //Select first song by default if no song is selected yet
                         _playbackScreenState.update {
@@ -234,6 +205,19 @@ class MP3PlayerViewModel @Inject constructor(
         }
     }
 
+    private fun handleMiddleButtonLongClicked() {
+        val action = useCases.middleButtonLongClickedUseCase(currentState = playbackScreenState.value)
+        when (action) {
+            MiddleButtonLongClickedAction.DELETE_SONG -> {
+                viewModelScope.launch {
+                    _mp3PlayerSongEvent.send(MP3PlayerSongEvent.ShowDeleteSongUI)
+                }
+            }
+
+            else -> {}
+        }
+    }
+
     private fun handlePlayPauseButtonClicked() {
         viewModelScope.launch {
             val playPauseMusicResult = useCases.playPauseButtonClickedUseCase(
@@ -254,20 +238,21 @@ class MP3PlayerViewModel @Inject constructor(
                     resumeMusic(playPauseMusicResult.second)
                 } ?: run {
 
-                    //Check if this is the first song being played and triggered with the OnPlayPauseClicked button
-                    //In this case select the first song
-
+                    //Check for the selected song, if any, and play it
+                    //Else, if the list is not empty, play the first song and select it
+                    //Else, if the list is empty, do nothing
                     val nextMp3Item =
                         playbackScreenState.value.mp3Items.firstOrNull { it.isSelected }?.let {
                             it
                         } ?: run {
-                            playbackScreenState.value.mp3Items[0].isSelected = true
-                            playbackScreenState.value.mp3Items[0]
+                            if (playbackScreenState.value.mp3Items.isEmpty().not()) {
+                                playbackScreenState.value.mp3Items[0].isSelected = true
+                                playbackScreenState.value.mp3Items[0]
+                            } else null
                         }
 
-
                     //Play
-                    playMusic(nextMp3Item.uri)
+                    playMusic(nextMp3Item?.uri)
                 }
             } else {
                 pauseMusic()
@@ -283,7 +268,7 @@ class MP3PlayerViewModel @Inject constructor(
             when {
                 currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible -> playNextOrPreviousSong(newState)
                 currentState.playbackScreenEnum == PlaybackScreenEnum.SETTINGS && !currentState.isMenuVisible -> {
-                    _mp3PlayerEvent.send(MP3PlayerEvent.SwitchToNextTheme)
+                    _mp3PlayerThemeEvent.send(MP3PlayerThemeEvent.SwitchToNextTheme)
                 }
                 else -> {
                     _playbackScreenState.update { newState }
@@ -300,7 +285,8 @@ class MP3PlayerViewModel @Inject constructor(
             when {
                 currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible -> playNextOrPreviousSong(newState)
                 currentState.playbackScreenEnum == PlaybackScreenEnum.SETTINGS && !currentState.isMenuVisible -> {
-                    _mp3PlayerEvent.send(MP3PlayerEvent.SwitchToPreviousTheme)
+                    _mp3PlayerThemeEvent.send(MP3PlayerThemeEvent.SwitchToPreviousTheme)
+
                 }
                 else -> {
                     _playbackScreenState.update { newState }
@@ -309,6 +295,7 @@ class MP3PlayerViewModel @Inject constructor(
         }
     }
 
+    //EXTRACTED
     suspend fun playPreviousSong() {
         val currentIndex = playbackScreenState.value.mp3Items.indexOfFirst { it.isSelected }
         val previousIndex =
@@ -325,6 +312,7 @@ class MP3PlayerViewModel @Inject constructor(
         }
     }
 
+    //EXTRACTED
     suspend fun playNextSong() {
         val currentIndex = playbackScreenState.value.mp3Items.indexOfFirst { it.isSelected }
         val nextIndex =
@@ -351,7 +339,7 @@ class MP3PlayerViewModel @Inject constructor(
 
     private suspend fun playMusic(uri: Uri?) {
         uri?.let {
-            _mp3PlayerEvent.send(MP3PlayerEvent.PlaySong(uri))
+            _mp3PlayerSongEvent.send(MP3PlayerSongEvent.PlaySong(uri))
             _playbackScreenState.update { currentState ->
                 currentState.copy(isMenuVisible = true,
                     playbackScreenEnum = PlaybackScreenEnum.SONG,
@@ -363,7 +351,7 @@ class MP3PlayerViewModel @Inject constructor(
 
     private suspend fun resumeMusic(uri: Uri?) {
         uri?.let {
-            _mp3PlayerEvent.send(MP3PlayerEvent.ResumeSong(uri))
+            _mp3PlayerSongEvent.send(MP3PlayerSongEvent.ResumeSong(uri))
             _playbackScreenState.update { currentState ->
                 currentState.copy(isMenuVisible = true,
                     playbackScreenEnum = PlaybackScreenEnum.SONG,
@@ -374,7 +362,7 @@ class MP3PlayerViewModel @Inject constructor(
     }
 
     private suspend fun pauseMusic() {
-        _mp3PlayerEvent.send(MP3PlayerEvent.PauseSong)
+        _mp3PlayerSongEvent.send(MP3PlayerSongEvent.PauseSong)
         _playbackScreenState.update {
             it.copy(
                 playbackScreenEnum = PlaybackScreenEnum.SONG,

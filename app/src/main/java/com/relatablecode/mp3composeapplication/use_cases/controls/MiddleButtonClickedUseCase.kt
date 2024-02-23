@@ -1,12 +1,7 @@
 package com.relatablecode.mp3composeapplication.use_cases.controls
 
-import android.net.Uri
-import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenEnum
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 

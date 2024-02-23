@@ -1,7 +1,7 @@
-package com.relatablecode.mp3composeapplication.event_broadcaster
+package com.relatablecode.mp3composeapplication.event_broadcaster.playback
 
 import com.relatablecode.mp3composeapplication.service.ServiceAction
 
-interface EventListener {
+interface PlaybackEventListener {
     fun onEventReceived(action: ServiceAction?)
 }

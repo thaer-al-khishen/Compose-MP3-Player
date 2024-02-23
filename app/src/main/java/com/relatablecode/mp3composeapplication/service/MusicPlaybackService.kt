@@ -7,9 +7,9 @@ import android.os.IBinder
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import com.relatablecode.mp3composeapplication.R
-import com.relatablecode.mp3composeapplication.event_broadcaster.PlaybackEventBroadcaster
-import com.relatablecode.mp3composeapplication.event_broadcaster.SongBroadcaster
-import com.relatablecode.mp3composeapplication.event_broadcaster.SongListener
+import com.relatablecode.mp3composeapplication.event_broadcaster.playback.PlaybackEventBroadcaster
+import com.relatablecode.mp3composeapplication.event_broadcaster.song.SongBroadcaster
+import com.relatablecode.mp3composeapplication.event_broadcaster.song.SongListener
 
 class MusicPlaybackService : Service(), SongListener {
 

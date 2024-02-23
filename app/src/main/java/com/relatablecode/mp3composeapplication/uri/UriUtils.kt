@@ -1,4 +1,4 @@
-package com.relatablecode.mp3composeapplication.utils
+package com.relatablecode.mp3composeapplication.uri
 
 import android.content.Context
 import android.media.MediaMetadataRetriever

@@ -1,4 +1,4 @@
-package com.relatablecode.mp3composeapplication.event_broadcaster
+package com.relatablecode.mp3composeapplication.event_broadcaster.song
 
 //Used to broadcast the new song title to the notification being displayed
 object SongBroadcaster {
