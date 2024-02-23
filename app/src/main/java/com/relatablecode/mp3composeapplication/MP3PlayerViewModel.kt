@@ -300,7 +300,7 @@ class MP3PlayerViewModel @Inject constructor(
             when {
                 currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible -> playNextOrPreviousSong(newState)
                 currentState.playbackScreenEnum == PlaybackScreenEnum.SETTINGS && !currentState.isMenuVisible -> {
-                    _mp3PlayerEvent.send(MP3PlayerEvent.SwitchToNextTheme)
+                    _mp3PlayerEvent.send(MP3PlayerEvent.SwitchToPreviousTheme)
                 }
                 else -> {
                     _playbackScreenState.update { newState }
