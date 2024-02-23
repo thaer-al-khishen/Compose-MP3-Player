@@ -45,11 +45,13 @@ class MP3PlayerViewModel @Inject constructor(
     private val _mp3PlayerThemeEvent = Channel<MP3PlayerThemeEvent>(Channel.BUFFERED)
     val mp3PlayerThemeEvent = _mp3PlayerThemeEvent.receiveAsFlow()
 
-    fun onPlaybackScreenEvent(event: MP3PlayerUIEvent) {
+    fun onGeneralUIEvent(event: MP3PlayerUIEvent) {
         when (event) {
             is MP3PlayerUIEvent.DeleteSong -> deleteSong()
             is MP3PlayerUIEvent.UpdateMp3Items -> updateMp3Items(event.mp3Items)
             is MP3PlayerUIEvent.NavigateToMusicList -> navigateToMusicList()
+            is MP3PlayerUIEvent.PlayPreviousSong -> viewModelScope.launch { playPreviousSong() }
+            is MP3PlayerUIEvent.PlayNextSong -> viewModelScope.launch { playNextSong() }
         }
     }
 
@@ -145,7 +147,7 @@ class MP3PlayerViewModel @Inject constructor(
             when (action) {
                 MiddleButtonAction.AccessMedia -> _mp3PlayerFileEvent.send(MP3PlayerFileEvent.AccessMediaMultipleFiles)
                 MiddleButtonAction.HideMenuSelectFirstSong -> {
-                    // Logic to hide the menu and select the first song, if any
+                    // If no songs are available, prompt the file choosing launcher
                     if (_playbackScreenState.value.mp3Items.isEmpty()) {
                         _mp3PlayerFileEvent.send(MP3PlayerFileEvent.AccessMediaMultipleFiles)
                     } else {
@@ -164,7 +166,7 @@ class MP3PlayerViewModel @Inject constructor(
                 }
 
                 MiddleButtonAction.PlaySelectedSong -> {
-                    // Logic to play the selected song or navigate to the song screen
+                    // Logic to play the selected song
                     playbackScreenState.value.mp3Items.firstOrNull { it.isSelected }?.let {
                         _playbackScreenState.update {
                             it.copy(
@@ -177,12 +179,12 @@ class MP3PlayerViewModel @Inject constructor(
                                 })
                         }
                     }
+                    //If no song is being played, play the new song, else, pause it, and play the new song
                     if (!playbackScreenState.value.isPlayingSong) {
                         playMusic(
                             playbackScreenState.value.mp3Items.find { it.isSelected }?.uri
                         )
                     } else {
-                        //If there is a song currently playing, pause it and play the selected song
                         pauseMusic()
                         playMusic(
                             playbackScreenState.value.mp3Items.find { it.isSelected }?.uri
@@ -220,6 +222,7 @@ class MP3PlayerViewModel @Inject constructor(
 
     private fun handlePlayPauseButtonClicked() {
         viewModelScope.launch {
+
             val playPauseMusicResult = useCases.playPauseButtonClickedUseCase(
                 playbackScreenState.value,
                 playbackScreenState.value.songBeingPlayed?.uri?.let {
@@ -232,12 +235,14 @@ class MP3PlayerViewModel @Inject constructor(
                     }
                 }
             )
+
+            //playPauseMusicResult.first returns the new state of isPlayingSong, will be switched after clicking on this button
+            //To pause/resume the song
             if (playPauseMusicResult.first) {
+                //If there was already a song being played, resume it
                 playbackScreenState.value.songBeingPlayed?.let {
-                    //Resume
                     resumeMusic(playPauseMusicResult.second)
                 } ?: run {
-
                     //Check for the selected song, if any, and play it
                     //Else, if the list is not empty, play the first song and select it
                     //Else, if the list is empty, do nothing
@@ -251,10 +256,11 @@ class MP3PlayerViewModel @Inject constructor(
                             } else null
                         }
 
-                    //Play
+                    //Play the song
                     playMusic(nextMp3Item?.uri)
                 }
             } else {
+                //Pause the song in this case, since playPauseMusicResult.first is now false, requiring music to be stopped
                 pauseMusic()
             }
         }
@@ -262,7 +268,7 @@ class MP3PlayerViewModel @Inject constructor(
 
     private fun handleFastForwardButtonClicked() {
         viewModelScope.launch {
-            //Check if the user is trying to fast forward a song, or just navigate the menu
+            //Check if the user is trying to fast forward a song, change the theme, or just navigate the menu
             val currentState = playbackScreenState.value
             val newState = useCases.fastForwardButtonClickedUseCase(currentState)
             when {
@@ -279,14 +285,13 @@ class MP3PlayerViewModel @Inject constructor(
 
     private fun handleRewindButtonClicked() {
         viewModelScope.launch {
-            //Check if the user is trying to fast forward a song, or just navigate the menu
+            //Check if the user is trying to rewind a song, change the theme, or just navigate the menu
             val currentState = playbackScreenState.value
             val newState = useCases.rewindButtonClickedUseCase(currentState)
             when {
                 currentState.playbackScreenEnum == PlaybackScreenEnum.SONG && !currentState.isMenuVisible -> playNextOrPreviousSong(newState)
                 currentState.playbackScreenEnum == PlaybackScreenEnum.SETTINGS && !currentState.isMenuVisible -> {
                     _mp3PlayerThemeEvent.send(MP3PlayerThemeEvent.SwitchToPreviousTheme)
-
                 }
                 else -> {
                     _playbackScreenState.update { newState }
@@ -295,8 +300,8 @@ class MP3PlayerViewModel @Inject constructor(
         }
     }
 
-    //EXTRACTED
-    suspend fun playPreviousSong() {
+    //Triggered from the notification
+    private suspend fun playPreviousSong() {
         val currentIndex = playbackScreenState.value.mp3Items.indexOfFirst { it.isSelected }
         val previousIndex =
             if (currentIndex > 0) currentIndex - 1 else playbackScreenState.value.mp3Items.lastIndex // Wrap to the last song if at the beginning
@@ -312,8 +317,8 @@ class MP3PlayerViewModel @Inject constructor(
         }
     }
 
-    //EXTRACTED
-    suspend fun playNextSong() {
+    //Triggered from the notification
+    private suspend fun playNextSong() {
         val currentIndex = playbackScreenState.value.mp3Items.indexOfFirst { it.isSelected }
         val nextIndex =
             if (currentIndex < playbackScreenState.value.mp3Items.lastIndex) currentIndex + 1 else 0 // Wrap to the first song if at the end
@@ -330,6 +335,7 @@ class MP3PlayerViewModel @Inject constructor(
     }
 
     private fun handleMenuButtonClicked() {
+        //Just show/hide the menu
         val newIsMenuVisible =
             useCases.menuButtonClickedUseCase(playbackScreenState.value.isMenuVisible)
         _playbackScreenState.update { currentState ->

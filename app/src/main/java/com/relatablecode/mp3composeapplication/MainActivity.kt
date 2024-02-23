@@ -51,29 +51,6 @@ import kotlinx.coroutines.withContext
 @AndroidEntryPoint
 class MainActivity : ComponentActivity(), PlaybackEventListener {
 
-    // For a single audio file selection
-    // Register the contract for picking a single document, allowing persistable permission.
-    private val pickAudioFile =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-
-            uri?.let {
-                try {
-                    // Take persistable URI permission.
-                    contentResolver.takePersistableUriPermission(
-                        it,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    )
-
-                    // Proceed to handle the URI
-                    saveUri(it)
-                    navigateToMusicList()
-                } catch (e: SecurityException) {
-                    // Handle the exception, possibly by informing the user
-                    Log.e("MainActivity", "Failed to take persistable URI permission", e)
-                }
-            }
-        }
-
     // For multiple audio file selections
     private val pickMultipleAudioFiles =
         registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri> ->
@@ -91,7 +68,7 @@ class MainActivity : ComponentActivity(), PlaybackEventListener {
             navigateToMusicList()
         }
 
-    private val viewModel: MP3PlayerViewModel by viewModels()
+    private val mp3PlayerViewModel: MP3PlayerViewModel by viewModels()
     private val uriViewModel: UriViewModel by viewModels()
     private val themesViewModel: ThemesViewModel by viewModels()
 
@@ -116,12 +93,11 @@ class MainActivity : ComponentActivity(), PlaybackEventListener {
 
             CompositionLocalProvider(LocalAppTheme provides currentTheme) {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    val playbackScreenState = viewModel.playbackScreenState.collectAsState()
+                    val playbackScreenState = mp3PlayerViewModel.playbackScreenState.collectAsState()
                     MP3PlayerDevice(
-                        playbackScreenState.value, viewModel::onCircularControlClickedEvent
+                        playbackScreenState.value, mp3PlayerViewModel::onCircularControlClickedEvent
                     )
                 }
             }
@@ -149,9 +125,8 @@ class MainActivity : ComponentActivity(), PlaybackEventListener {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 withContext(Dispatchers.Main.immediate) {
-                    viewModel.mp3PlayerEvent.collect {
+                    mp3PlayerViewModel.mp3PlayerEvent.collect {
                         when (it) {
-
                             is MP3PlayerSongEvent.PlaySong -> {
                                 playMusic(it.uri)
                             }
@@ -204,15 +179,15 @@ class MainActivity : ComponentActivity(), PlaybackEventListener {
                     }
 
                     // Update your PlaybackScreenState with the new list of Mp3Items
-                    viewModel.onPlaybackScreenEvent(MP3PlayerUIEvent.UpdateMp3Items(mp3Items))
+                    mp3PlayerViewModel.onGeneralUIEvent(MP3PlayerUIEvent.UpdateMp3Items(mp3Items))
                 }
             }
         }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.mp3PlayerFileEvent.collect { event ->
-                    when(event) {
+                mp3PlayerViewModel.mp3PlayerFileEvent.collect { event ->
+                    when (event) {
                         is MP3PlayerFileEvent.AccessMediaMultipleFiles -> {
                             showMultipleFilePicker()
                         }
@@ -223,8 +198,8 @@ class MainActivity : ComponentActivity(), PlaybackEventListener {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.mp3PlayerThemeEvent.collect { event ->
-                    when(event) {
+                mp3PlayerViewModel.mp3PlayerThemeEvent.collect { event ->
+                    when (event) {
                         is MP3PlayerThemeEvent.SwitchToPreviousTheme -> {
                             switchToPreviousTheme()
                         }
@@ -237,10 +212,6 @@ class MainActivity : ComponentActivity(), PlaybackEventListener {
             }
         }
 
-    }
-
-    private fun showSingleFilePicker() {
-        pickAudioFile.launch(arrayOf("audio/*")) // MIME type for audio files
     }
 
     private fun showMultipleFilePicker() {
@@ -276,12 +247,6 @@ class MainActivity : ComponentActivity(), PlaybackEventListener {
         startService(serviceIntent)
     }
 
-    private fun stopAndReleaseMusic() {
-        exoPlayer.stop()
-        exoPlayer.clearMediaItems()
-        exoPlayer.release()
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         val serviceIntent = Intent(this, MusicPlaybackService::class.java).apply {
@@ -295,12 +260,6 @@ class MainActivity : ComponentActivity(), PlaybackEventListener {
         exoPlayer = ExoPlayer.Builder(this).build().apply {
             // Add media items, prepare and other initial setup if necessary
         }
-    }
-
-    private fun preparePlayerWithUri(uri: Uri) {
-        val mediaItem = MediaItem.fromUri(uri)
-        exoPlayer.setMediaItem(mediaItem)
-        exoPlayer.prepare()
     }
 
     private fun getFileName(context: Context, uri: Uri): String? {
@@ -317,8 +276,8 @@ class MainActivity : ComponentActivity(), PlaybackEventListener {
         return fileName
     }
 
+    //Created to save a single uri when the user wants to import only 1 mp3 file
     private fun saveUri(uri: Uri) {
-//        viewModel.saveUri(uri)
         uriViewModel.onEvent(UriEvent.SaveUriEvent(uri))
     }
 
@@ -332,13 +291,14 @@ class MainActivity : ComponentActivity(), PlaybackEventListener {
     }
 
     private fun deleteSong() {
-        viewModel.onPlaybackScreenEvent(MP3PlayerUIEvent.DeleteSong)
+        mp3PlayerViewModel.onGeneralUIEvent(MP3PlayerUIEvent.DeleteSong)
     }
 
     private fun navigateToMusicList() {
-        viewModel.onPlaybackScreenEvent(MP3PlayerUIEvent.NavigateToMusicList)
+        mp3PlayerViewModel.onGeneralUIEvent(MP3PlayerUIEvent.NavigateToMusicList)
     }
 
+    //Manage our timer after pausing/resuming the exoplayer
     private fun observeExoPlayerStateChanges() {
         val listener = object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -357,15 +317,20 @@ class MainActivity : ComponentActivity(), PlaybackEventListener {
         themesViewModel.switchToPreviousTheme()
     }
 
+    //Receive playback related events from the MusicPlaybackService
     override fun onEventReceived(action: ServiceAction?) {
         when (action) {
             ServiceAction.PLAY_MUSIC -> {
                 songUri?.let {
                     TimerManager.stopTimer()
-                    TimerManager.setTimerDuration(viewModel.playbackScreenState.value.songBeingPlayed?.duration ?: 0L)
+                    TimerManager.setTimerDuration(
+                        mp3PlayerViewModel.playbackScreenState.value.songBeingPlayed?.duration ?: 0L
+                    )
                     TimerManager.startOrResumeTimer() // Consider if you want to reset the timer every time the song changes
 
-                    SongBroadcaster.emitAction(viewModel.playbackScreenState.value.songBeingPlayed?.title ?: "Song")
+                    SongBroadcaster.emitAction(
+                        mp3PlayerViewModel.playbackScreenState.value.songBeingPlayed?.title ?: "Song"
+                    )
 
                     val mediaItem = MediaItem.fromUri(it)
                     exoPlayer.setMediaItem(mediaItem)
@@ -394,13 +359,13 @@ class MainActivity : ComponentActivity(), PlaybackEventListener {
 
             ServiceAction.REWIND -> {
                 lifecycleScope.launch {
-                    viewModel.playPreviousSong()
+                    mp3PlayerViewModel.onGeneralUIEvent(MP3PlayerUIEvent.PlayPreviousSong)
                 }
             }
 
             ServiceAction.FAST_FORWARD -> {
                 lifecycleScope.launch {
-                    viewModel.playNextSong()
+                    mp3PlayerViewModel.onGeneralUIEvent(MP3PlayerUIEvent.PlayNextSong)
                 }
             }
 
