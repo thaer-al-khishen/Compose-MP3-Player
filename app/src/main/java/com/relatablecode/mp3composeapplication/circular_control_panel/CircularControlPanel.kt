@@ -32,12 +32,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.relatablecode.mp3composeapplication.R
-import com.relatablecode.mp3composeapplication.Theme
 import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CircularControlPanel(modifier: Modifier = Modifier, onEvent: (CircularControlClickEvent) -> Unit) {
+    //The circular wheel with 5 clickable buttons
     val outerCircleSize = 250.dp
     val innerCircleSize = 120.dp
 
@@ -86,15 +86,6 @@ fun CircularControlPanel(modifier: Modifier = Modifier, onEvent: (CircularContro
                 .size(innerCircleSize)
                 .clip(CircleShape)
                 .background(localTheme.playbackInnerCircleColor)
-//                .clickable { onEvent.invoke(CircularControlClickEvent.OnMiddleButtonClicked) }
-//                .pointerInput(Unit) {
-//                    detectTapGestures(
-//                        onPress = { /* Called when the gesture starts */ },
-//                        onDoubleTap = { /* Called on Double Tap */ },
-//                        onLongPress = { onEvent.invoke(CircularControlClickEvent.OnMiddleButtonLongClicked) },
-//                        onTap = { onEvent.invoke(CircularControlClickEvent.OnMiddleButtonClicked) }
-//                    )
-//                }
                 .combinedClickable(
                     onClick = { onEvent.invoke(CircularControlClickEvent.OnMiddleButtonClicked) },
                     onLongClick = { onEvent.invoke(CircularControlClickEvent.OnMiddleButtonLongClicked) }
@@ -127,4 +118,5 @@ private fun ControlItem(modifier: Modifier = Modifier, text: String? = null, ico
             Icon(icon, contentDescription = null, tint = LocalAppTheme.current.playbackButtonColor, modifier = modifier.then(Modifier.padding(15.dp)))
         }
     }
+
 }

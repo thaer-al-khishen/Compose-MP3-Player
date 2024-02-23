@@ -1,4 +1,4 @@
-package com.relatablecode.mp3composeapplication.playback_screen.middle_section
+package com.relatablecode.mp3composeapplication.playback_screen.middle_section.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,7 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.relatablecode.mp3composeapplication.R
-import com.relatablecode.mp3composeapplication.Theme
 import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 
 @Composable

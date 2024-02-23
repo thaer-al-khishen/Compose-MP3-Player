@@ -1,4 +1,4 @@
-package com.relatablecode.mp3composeapplication.playback_screen.middle_section
+package com.relatablecode.mp3composeapplication.playback_screen.middle_section.music_list
 
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -21,8 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,17 +28,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.relatablecode.mp3composeapplication.Mp3Item
 import com.relatablecode.mp3composeapplication.R
-import com.relatablecode.mp3composeapplication.Theme
 import com.relatablecode.mp3composeapplication.conditional
-import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
 import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 
 @Composable
 fun PlaybackScreenMusicList(
     modifier: Modifier = Modifier,
-    playbackScreenState: PlaybackScreenState
+    musicListState: MusicListState    //You only need the mp3 items
 ) {
-    if (playbackScreenState.mp3Items.isEmpty()) {
+    if (musicListState.mp3Items.isEmpty()) {
         Column(
             modifier = modifier.then(
                 Modifier.fillMaxWidth()
@@ -68,7 +64,7 @@ fun PlaybackScreenMusicList(
         val listState = rememberLazyListState()
 
         // Find the index of the selected item
-        val selectedIndex = playbackScreenState.mp3Items.indexOfFirst { it.isSelected }
+        val selectedIndex = musicListState.mp3Items.indexOfFirst { it.isSelected }
         LaunchedEffect(selectedIndex) {
             if (selectedIndex >= 0) {
                 // Scroll to make the selected item visible
@@ -85,7 +81,7 @@ fun PlaybackScreenMusicList(
             )
         ) {
             items(
-                playbackScreenState.mp3Items
+                musicListState.mp3Items
                 , key = { it.uri }) {
                 MP3MusicItem(mp3Item = it)
             }

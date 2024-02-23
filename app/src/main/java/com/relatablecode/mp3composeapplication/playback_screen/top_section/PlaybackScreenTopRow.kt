@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.relatablecode.mp3composeapplication.R
-import com.relatablecode.mp3composeapplication.Theme
 import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat

@@ -27,7 +27,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.relatablecode.mp3composeapplication.event.MP3PlayerEvent
-import com.relatablecode.mp3composeapplication.event_broadcaster.EventBroadcaster
+import com.relatablecode.mp3composeapplication.event_broadcaster.PlaybackEventBroadcaster
 import com.relatablecode.mp3composeapplication.event_broadcaster.EventListener
 import com.relatablecode.mp3composeapplication.event_broadcaster.SongBroadcaster
 import com.relatablecode.mp3composeapplication.mp3_player_device.MP3PlayerDevice
@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity(), EventListener {
 
         // Initialize ExoPlayer
         initializePlayer()
-        EventBroadcaster.registerListener(this)
+        PlaybackEventBroadcaster.registerListener(this)
         observeExoPlayerStateChanges()
 
         setContent {
@@ -115,7 +115,7 @@ class MainActivity : ComponentActivity(), EventListener {
                 ) {
                     val playbackScreenState = viewModel.playbackScreenState.collectAsState()
                     MP3PlayerDevice(
-                        exoPlayer = exoPlayer, playbackScreenState.value, viewModel::onEvent
+                        playbackScreenState.value, viewModel::onEvent
                     )
                 }
             }

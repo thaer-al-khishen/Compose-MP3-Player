@@ -1,27 +1,39 @@
 package com.relatablecode.mp3composeapplication.playback_screen.middle_section
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.media3.exoplayer.ExoPlayer
+import com.relatablecode.mp3composeapplication.playback_screen.middle_section.home.PlaybackScreenHome
+import com.relatablecode.mp3composeapplication.playback_screen.middle_section.music_list.MusicListState
+import com.relatablecode.mp3composeapplication.playback_screen.middle_section.music_list.PlaybackScreenMusicList
+import com.relatablecode.mp3composeapplication.playback_screen.middle_section.settings.PlaybackScreenSettings
+import com.relatablecode.mp3composeapplication.playback_screen.middle_section.song.PlaybackScreenSong
+import com.relatablecode.mp3composeapplication.playback_screen.middle_section.song.SongState
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenEnum
-import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
 
 @Composable
 fun PlaybackScreenMiddleRow(
-    modifier: Modifier = Modifier, playbackScreenState: PlaybackScreenState = PlaybackScreenState(
-        playbackScreenEnum = PlaybackScreenEnum.HOME, isMenuVisible = true
-    ), exoPlayer: ExoPlayer
+    modifier: Modifier = Modifier, middleRowState: MiddleRowState
 ) {
-    when {
-        playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST -> {
-            PlaybackScreenMusicList(modifier = modifier, playbackScreenState = playbackScreenState)
+
+    val musicListState = remember(middleRowState.mp3Items) {
+        MusicListState(mp3Items = middleRowState.mp3Items)
+    }
+
+    val songState = remember(middleRowState.songBeingPlayed) {
+        SongState(songBeingPlayed = middleRowState.songBeingPlayed)
+    }
+
+    when(middleRowState.playbackScreenEnum) {
+        PlaybackScreenEnum.MUSIC_LIST -> {
+            PlaybackScreenMusicList(modifier = modifier, musicListState = musicListState)
         }
 
-        playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.SONG -> {
-            PlaybackScreenSong(playbackScreenState = playbackScreenState, exoPlayer = exoPlayer)
+        PlaybackScreenEnum.SONG -> {
+            PlaybackScreenSong(songState = songState)
         }
 
-        playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.SETTINGS -> {
+        PlaybackScreenEnum.SETTINGS -> {
             PlaybackScreenSettings()
         }
 
@@ -29,4 +41,5 @@ fun PlaybackScreenMiddleRow(
             PlaybackScreenHome()
         }
     }
+
 }

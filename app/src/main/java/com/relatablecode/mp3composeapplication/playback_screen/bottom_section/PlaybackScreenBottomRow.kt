@@ -16,7 +16,7 @@ import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScr
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
 
 @Composable
-fun PlaybackScreenBottomRow(modifier: Modifier = Modifier, playbackScreenState: PlaybackScreenState) {
+fun PlaybackScreenBottomRow(modifier: Modifier = Modifier, bottomRowState: BottomRowState) {  //You need isMenuVisible and playbackScreenEnum
     Row(
         modifier = modifier.then(
             Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
@@ -24,30 +24,30 @@ fun PlaybackScreenBottomRow(modifier: Modifier = Modifier, playbackScreenState: 
         horizontalArrangement = Arrangement.Start,  //Divides the content equally, like SpaceEvenly, but in this case, the start and end composables inside the content are at the edges of the screen
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (playbackScreenState.isMenuVisible) {
+        if (bottomRowState.isMenuVisible) {
             MP3PlayerSelectionIcon(
-                isSelected = playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.HOME,
+                isSelected = bottomRowState.playbackScreenEnum == PlaybackScreenEnum.HOME,
                 selectedImage = R.drawable.ic_home_blue,
                 unSelectedImage = R.drawable.ic_home_white,
                 contentDescription = "Home"
             )
             Spacer(modifier = Modifier.width(8.dp))
             MP3PlayerSelectionIcon(
-                isSelected = playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST,
+                isSelected = bottomRowState.playbackScreenEnum == PlaybackScreenEnum.MUSIC_LIST,
                 selectedImage = R.drawable.ic_music_note_blue,
                 unSelectedImage = R.drawable.ic_music_note_white,
                 contentDescription = "Home"
             )
             Spacer(modifier = Modifier.width(8.dp))
             MP3PlayerSelectionIcon(
-                isSelected = playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.SONG,
+                isSelected = bottomRowState.playbackScreenEnum == PlaybackScreenEnum.SONG,
                 selectedImage = R.drawable.ic_play,
                 unSelectedImage = R.drawable.ic_play,
                 contentDescription = "Home"
             )
             Spacer(modifier = Modifier.width(8.dp))
             MP3PlayerSelectionIcon(
-                isSelected = playbackScreenState.playbackScreenEnum == PlaybackScreenEnum.SETTINGS,
+                isSelected = bottomRowState.playbackScreenEnum == PlaybackScreenEnum.SETTINGS,
                 selectedImage = R.drawable.ic_settings,
                 unSelectedImage = R.drawable.ic_settings,
                 contentDescription = "Home"

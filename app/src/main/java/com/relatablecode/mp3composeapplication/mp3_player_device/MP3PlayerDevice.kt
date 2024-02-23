@@ -14,7 +14,7 @@ import com.relatablecode.mp3composeapplication.circular_control_panel.CircularCo
 import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
 
 @Composable
-fun MP3PlayerDevice(exoPlayer: ExoPlayer, playbackScreenState: PlaybackScreenState, onEvent: (CircularControlClickEvent) -> Unit) {
+fun MP3PlayerDevice(playbackScreenState: PlaybackScreenState, onEvent: (CircularControlClickEvent) -> Unit) {
 
     ConstraintLayout(
         modifier = Modifier
@@ -33,7 +33,7 @@ fun MP3PlayerDevice(exoPlayer: ExoPlayer, playbackScreenState: PlaybackScreenSta
             end.linkTo(parent.end, 16.dp)
             width = Dimension.fillToConstraints
             height = Dimension.value(300.dp)
-        }, playbackScreenState = playbackScreenState, exoPlayer = exoPlayer)
+        }, playbackScreenState = playbackScreenState)
 
         CircularControlPanel(modifier = Modifier.constrainAs(buttons) {
             top.linkTo(guideline, 50.dp)

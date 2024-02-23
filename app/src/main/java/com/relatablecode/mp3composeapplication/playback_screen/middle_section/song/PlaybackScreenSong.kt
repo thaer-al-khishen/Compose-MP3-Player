@@ -1,4 +1,4 @@
-package com.relatablecode.mp3composeapplication.playback_screen.middle_section
+package com.relatablecode.mp3composeapplication.playback_screen.middle_section.song
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,19 +19,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.media3.exoplayer.ExoPlayer
 import com.relatablecode.mp3composeapplication.Mp3Item
 import com.relatablecode.mp3composeapplication.R
-import com.relatablecode.mp3composeapplication.Theme
-import com.relatablecode.mp3composeapplication.playback_screen.state.PlaybackScreenState
 import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 import com.relatablecode.mp3composeapplication.timer.TimerManager
 
 @Composable
 fun PlaybackScreenSong(
     modifier: Modifier = Modifier,
-    playbackScreenState: PlaybackScreenState,
-    exoPlayer: ExoPlayer,
+    songState: SongState,   //You only need the song being played
 ) {
     // Collecting state for current position and total duration
     val currentPosition by TimerManager.timer.collectAsState()
@@ -40,7 +36,7 @@ fun PlaybackScreenSong(
     // UI for displaying song details and progress
     SongDetailsUI(
         modifier = modifier,
-        song = playbackScreenState.songBeingPlayed,
+        song = songState.songBeingPlayed,
         currentPosition = currentPosition,
         duration = duration
     )

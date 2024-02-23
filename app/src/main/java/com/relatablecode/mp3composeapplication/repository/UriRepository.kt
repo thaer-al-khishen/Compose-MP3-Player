@@ -64,6 +64,4 @@ class UriRepository @Inject constructor(@ApplicationContext val appContext: Cont
             preferences[PreferencesKeys.SELECTED_URIS] ?: setOf()
         }
 
-    // Add methods to take and release persistable URI permissions
-
 }

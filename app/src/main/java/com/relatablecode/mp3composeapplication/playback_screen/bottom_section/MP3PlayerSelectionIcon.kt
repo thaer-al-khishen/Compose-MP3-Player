@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.relatablecode.mp3composeapplication.Theme
 import com.relatablecode.mp3composeapplication.theme.LocalAppTheme
 
 @Composable

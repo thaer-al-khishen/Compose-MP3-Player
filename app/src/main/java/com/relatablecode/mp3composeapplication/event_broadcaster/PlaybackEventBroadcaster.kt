@@ -2,7 +2,8 @@ package com.relatablecode.mp3composeapplication.event_broadcaster
 
 import com.relatablecode.mp3composeapplication.service.ServiceAction
 
-object EventBroadcaster {
+//Used to broadcast the mp3 playback related events
+object PlaybackEventBroadcaster {
 
     private val listOfListeners: MutableSet<EventListener> = HashSet()
 

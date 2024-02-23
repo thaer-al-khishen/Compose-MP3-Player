@@ -1,5 +1,6 @@
 package com.relatablecode.mp3composeapplication.event_broadcaster
 
+//Used to broadcast the new song title to the notification being displayed
 object SongBroadcaster {
 
     private val listOfListeners: MutableSet<SongListener> = HashSet()

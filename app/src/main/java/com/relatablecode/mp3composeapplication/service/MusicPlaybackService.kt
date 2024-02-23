@@ -1,18 +1,15 @@
 package com.relatablecode.mp3composeapplication.service
 
-import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
-import android.media.MediaPlayer
 import android.os.IBinder
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import com.relatablecode.mp3composeapplication.R
-import com.relatablecode.mp3composeapplication.event_broadcaster.EventBroadcaster
+import com.relatablecode.mp3composeapplication.event_broadcaster.PlaybackEventBroadcaster
 import com.relatablecode.mp3composeapplication.event_broadcaster.SongBroadcaster
 import com.relatablecode.mp3composeapplication.event_broadcaster.SongListener
-import com.relatablecode.mp3composeapplication.timer.TimerManager
 
 class MusicPlaybackService : Service(), SongListener {
 
@@ -53,35 +50,35 @@ class MusicPlaybackService : Service(), SongListener {
 
     private fun playMusic() {
         // Handle music playing logic
-        EventBroadcaster.emitAction(ServiceAction.PLAY_MUSIC)
+        PlaybackEventBroadcaster.emitAction(ServiceAction.PLAY_MUSIC)
     }
 
     private fun resumeMusic() {
         // Handle music resuming logic
-        EventBroadcaster.emitAction(ServiceAction.RESUME_MUSIC)
+        PlaybackEventBroadcaster.emitAction(ServiceAction.RESUME_MUSIC)
     }
 
     private fun pauseMusic() {
         // Handle music pausing logic
-        EventBroadcaster.emitAction(ServiceAction.PAUSE_MUSIC)
+        PlaybackEventBroadcaster.emitAction(ServiceAction.PAUSE_MUSIC)
     }
 
     private fun stopMusic() {
         // Handle music stopping logic
         isPlayingMusic = false
-        EventBroadcaster.emitAction(ServiceAction.STOP_MUSIC)
+        PlaybackEventBroadcaster.emitAction(ServiceAction.STOP_MUSIC)
         stopForeground(true)
         stopSelf()
     }
 
     private fun rewind() {
         // Handle rewind logic
-        EventBroadcaster.emitAction(ServiceAction.REWIND)
+        PlaybackEventBroadcaster.emitAction(ServiceAction.REWIND)
     }
 
     private fun fastForward() {
         // Handle fast forward logic
-        EventBroadcaster.emitAction(ServiceAction.FAST_FORWARD)
+        PlaybackEventBroadcaster.emitAction(ServiceAction.FAST_FORWARD)
     }
 
     private fun updateNotification() {
@@ -130,7 +127,8 @@ class MusicPlaybackService : Service(), SongListener {
     }
 
     override fun onDestroy() {
-        EventBroadcaster.emitAction(ServiceAction.STOP_MUSIC)
+        PlaybackEventBroadcaster.emitAction(ServiceAction.STOP_MUSIC)
+        SongBroadcaster.unregisterListener(this)
         super.onDestroy()
     }
 

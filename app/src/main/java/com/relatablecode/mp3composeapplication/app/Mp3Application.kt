@@ -10,6 +10,7 @@ import dagger.hilt.android.HiltAndroidApp
 class Mp3Application: Application() {
     override fun onCreate() {
         super.onCreate()
+        //Make sure the notification channel is only created once, here in this Application class
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val serviceChannel = NotificationChannel(
                 "MP3_SERVICE_CHANNEL",
