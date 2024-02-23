@@ -128,7 +128,7 @@ class MusicPlaybackService : Service(), SongListener {
 
     override fun onDestroy() {
         PlaybackEventBroadcaster.emitAction(ServiceAction.STOP_MUSIC)
-        SongBroadcaster.unregisterListener(this)
+//        SongBroadcaster.unregisterListener(this)
         super.onDestroy()
     }
 

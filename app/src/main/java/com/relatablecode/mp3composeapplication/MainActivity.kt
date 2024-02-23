@@ -355,6 +355,7 @@ class MainActivity : ComponentActivity(), PlaybackEventListener {
                 TimerManager.stopTimer()
                 exoPlayer.stop()
                 exoPlayer.clearMediaItems()
+                exoPlayer.release()
             }
 
             ServiceAction.REWIND -> {
