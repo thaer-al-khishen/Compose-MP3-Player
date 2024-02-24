@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.MP3ComposeApplication" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
+
+    <style name="CustomSplashTheme" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/white</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_ipod_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.MP3ComposeApplication</item>
+    </style>
+
 </resources>
